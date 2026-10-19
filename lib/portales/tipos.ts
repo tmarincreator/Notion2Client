@@ -54,3 +54,20 @@ export type DatosPortal = {
 };
 
 export const COLOR_POR_DEFECTO = "#c2410c";
+
+/** Lo que hace falta para publicar un portal, en el orden en que se muestra. */
+export const REQUISITOS_PUBLICAR = [
+  "Elegir una base de datos de Notion",
+  "Marcar al menos un campo como visible",
+  "Definir una contraseña",
+] as const;
+
+/** Requisitos que aún le faltan a un portal (vacío = listo para publicar). */
+export function pendientesDe(portal: Pick<Portal, "fuente_notion_id" | "propiedades_visibles">, tieneContrasena: boolean) {
+  const [base, campos, contrasena] = REQUISITOS_PUBLICAR;
+  return [
+    ...(portal.fuente_notion_id ? [] : [base]),
+    ...(portal.propiedades_visibles.length ? [] : [campos]),
+    ...(tieneContrasena ? [] : [contrasena]),
+  ];
+}

@@ -22,6 +22,7 @@ export async function cambiarNombre(_previo: EstadoCuenta, nombre: string): Prom
   const agencia = nombre.trim();
   if (!agencia) return { errores: { nombre: "Escribe el nombre de tu agencia." } };
   if (agencia.length > 120) return { errores: { nombre: "Máximo 120 caracteres." } };
+  await obtenerUsuario();
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ data: { agencia } });

@@ -16,6 +16,7 @@ import { listarBases, obtenerBase } from "@/lib/notion/bases";
 import { tokenAgencia } from "@/lib/notion/conexion";
 import type { ErrorNotion } from "@/lib/notion/errores";
 import { obtenerPortal, portalTieneContrasena } from "@/lib/portales/datos";
+import { pendientesDe } from "@/lib/portales/tipos";
 import {
   despublicarPortal,
   elegirBase,
@@ -23,7 +24,6 @@ import {
   guardarCampos,
   guardarDatos,
   guardarMarca,
-  pendientesParaPublicar,
   publicarPortal,
 } from "../actions";
 
@@ -48,7 +48,8 @@ async function Asistente({
   const portal = await obtenerPortal(id);
   if (!portal) notFound();
 
-  const [tieneContrasena, pendientes] = await Promise.all([portalTieneContrasena(id), pendientesParaPublicar(id)]);
+  const tieneContrasena = await portalTieneContrasena(id);
+  const pendientes = pendientesDe(portal, tieneContrasena);
   const completos = [
     1,
     ...(portal.fuente_notion_id ? [2] : []),
