@@ -173,7 +173,7 @@ function Falta({ texto, href }: { texto: string; href: string }) {
 
 function Cargando() {
   return (
-    <div className="flex flex-col gap-6" aria-busy="true" aria-label="Cargando portal">
+    <div className="flex flex-col gap-6" role="status" aria-label="Cargando portal">
       <span className="n2c-skel" style={{ width: 280, height: 32 }} />
       <div className="n2c-card flex flex-col gap-4 p-6">
         {[1, 2, 3].map((n) => <span key={n} className="n2c-skel" style={{ width: `${80 - n * 15}%` }} />)}

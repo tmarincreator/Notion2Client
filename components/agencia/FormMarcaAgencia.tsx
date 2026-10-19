@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icono } from "@/components/ui/Icono";
 import { Boton } from "@/components/ui/Boton";
 import { LogoAgencia } from "@/components/ui/Logo";
+import { estiloAcento } from "@/lib/color";
 import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 import { createClient } from "@/lib/supabase/client";
 import { guardarColorAgencia, guardarLogo, quitarLogo, type EstadoMarca } from "@/app/(agencia)/ajustes/actions";
@@ -33,7 +34,7 @@ export function FormMarcaAgencia({
   const [estadoColor, enviarColor, guardandoColor] = useActionState(guardarColorAgencia, {});
   const [estadoLogo, setEstadoLogo] = useState<EstadoMarca>({});
   const [subiendo, iniciar] = useTransition();
-  const estilo = { "--accent": color, "--accent-hover": color } as React.CSSProperties;
+  const estilo = estiloAcento(color);
 
   function elegirArchivo(e: React.ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];

@@ -15,7 +15,13 @@ export const metadata: Metadata = { title: "Vista previa · Notion2Client", robo
 */
 export default function PaginaVistaPrevia(props: PageProps<"/vista-previa/[id]">) {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><span className="n2c-skel w-40" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Cargando vista previa">
+          <span className="n2c-skel w-40" />
+        </div>
+      }
+    >
       <VistaPrevia params={props.params} />
     </Suspense>
   );

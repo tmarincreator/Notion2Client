@@ -4,6 +4,7 @@ import { startTransition, useActionState, useState } from "react";
 import { Icono } from "@/components/ui/Icono";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { LogoAgencia } from "@/components/ui/Logo";
+import { estiloAcento } from "@/lib/color";
 import type { EstadoFormulario } from "@/app/(agencia)/portales/actions";
 import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 
@@ -23,7 +24,7 @@ export function FormMarca({
 }) {
   const [estado, enviarAccion, enviando] = useActionState(accion, {});
   const [color, setColor] = useState(colorInicial);
-  const estilo = { "--accent": color, "--accent-hover": color } as React.CSSProperties;
+  const estilo = estiloAcento(color);
 
   function enviar(e: React.FormEvent) {
     e.preventDefault();

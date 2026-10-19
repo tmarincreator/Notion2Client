@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icono } from "@/components/ui/Icono";
 import { LogoAgencia } from "@/components/ui/Logo";
+import { estiloAcento } from "@/lib/color";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { salirPortal } from "@/app/p/[slug]/actions";
 import type { DatosPortal } from "@/lib/portales/tipos";
@@ -26,7 +27,7 @@ export function VistaPortal({
 }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
-  const estilo = { "--accent": datos.color, "--accent-hover": datos.color } as React.CSSProperties;
+  const estilo = estiloAcento(datos.color);
 
   function salir() {
     iniciar(async () => {
@@ -130,7 +131,10 @@ function Contenido({ datos }: { datos: DatosPortal }) {
   function elegir(id: string) {
     setSeleccionado(id);
     // En móvil el detalle queda debajo de la lista: lo acercamos a la vista.
-    if (window.innerWidth < 860) detalle.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (window.innerWidth < 860) {
+      const sinMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      detalle.current?.scrollIntoView({ behavior: sinMovimiento ? "auto" : "smooth", block: "start" });
+    }
   }
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useState, useRef } from "react";
+import { useEnfocarError } from "@/components/ui/useEnfocarError";
 import { Icono } from "@/components/ui/Icono";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { Campo, Input } from "@/components/ui/Campo";
@@ -31,6 +32,8 @@ export function FormDatos({
   publicado?: boolean;
 }) {
   const [estado, enviarAccion, enviando] = useActionState(accion, {});
+  const formulario = useRef<HTMLFormElement>(null);
+  useEnfocarError(formulario, estado);
   const [cliente, setCliente] = useState(inicial?.cliente ?? "");
   const [nombre, setNombre] = useState(inicial?.nombre ?? "");
   const [slug, setSlug] = useState(inicial?.slug ?? "");
@@ -45,7 +48,7 @@ export function FormDatos({
   }
 
   return (
-    <form className="flex flex-col gap-5" onSubmit={enviar} noValidate>
+    <form ref={formulario} className="flex flex-col gap-5" onSubmit={enviar} noValidate>
       <AvisoFormulario error={enviando ? undefined : estado.error} />
 
       <Campo id="pt-cliente" etiqueta="Nombre del cliente" error={errores.cliente}>

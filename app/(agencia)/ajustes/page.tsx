@@ -173,7 +173,7 @@ function AvisoError({ mensaje, extra }: { mensaje: string; extra?: string }) {
 
 function SeccionCargando() {
   return (
-    <div className="n2c-card flex flex-col gap-4 p-6" aria-busy="true" aria-label="Comprobando la conexión con Notion">
+    <div className="n2c-card flex flex-col gap-4 p-6" role="status" aria-label="Comprobando la conexión con Notion">
       <span className="n2c-skel" style={{ width: "30%", height: 20 }} />
       <div className="flex gap-6">
         {[1, 2, 3].map((n) => <span key={n} className="n2c-skel flex-1" />)}

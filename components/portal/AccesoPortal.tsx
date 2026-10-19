@@ -1,9 +1,11 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useState, useRef } from "react";
+import { useEnfocarError } from "@/components/ui/useEnfocarError";
 import { useRouter } from "next/navigation";
 import { Icono } from "@/components/ui/Icono";
 import { LogoAgencia } from "@/components/ui/Logo";
+import { estiloAcento } from "@/lib/color";
 import { Boton } from "@/components/ui/Boton";
 import { Campo } from "@/components/ui/Campo";
 import { CampoContrasena } from "@/components/ui/CampoContrasena";
@@ -25,6 +27,8 @@ export type CabeceraPortal = {
 export function AccesoPortal({ slug, cabecera, demo }: { slug: string; cabecera: CabeceraPortal; demo: boolean }) {
   const router = useRouter();
   const [estado, enviarAccion, enviando] = useActionState(entrarPortal.bind(null, slug), {});
+  const formulario = useRef<HTMLFormElement>(null);
+  useEnfocarError(formulario, estado);
   const [contrasena, setContrasena] = useState("");
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
   const error = errorLocal ?? (enviando ? null : (estado.error ?? null));
@@ -45,7 +49,7 @@ export function AccesoPortal({ slug, cabecera, demo }: { slug: string; cabecera:
     startTransition(() => enviarAccion(contrasena));
   }
 
-  const estilo = { "--accent": cabecera.color, "--accent-hover": cabecera.color } as React.CSSProperties;
+  const estilo = estiloAcento(cabecera.color);
 
   return (
     <div style={estilo} className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-[72px]">
@@ -59,7 +63,7 @@ export function AccesoPortal({ slug, cabecera, demo }: { slug: string; cabecera:
           <p className="n2c-small n2c-muted">Este portal es privado. Introduce la contraseña que te ha enviado tu contacto.</p>
         </div>
 
-        <form className="flex flex-col gap-4" onSubmit={enviar} noValidate>
+        <form ref={formulario} className="flex flex-col gap-4" onSubmit={enviar} noValidate>
           <Campo id="cp-pass" etiqueta="Contraseña" error={error}>
             <CampoContrasena
               id="cp-pass"

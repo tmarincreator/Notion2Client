@@ -1,5 +1,7 @@
 /* Logotipos: el de Notion2Client y el de la agencia (iniciales sobre su color). */
 
+import { estiloAcento } from "@/lib/color";
+
 export function Wordmark({ pequeno = false }: { pequeno?: boolean }) {
   return (
     <>
@@ -44,7 +46,7 @@ export function LogoAgencia({
   }
 
   const estilo = {
-    ...(color ? { "--accent": color } : {}),
+    ...(color ? estiloAcento(color) : {}),
     ...tamano,
     ...(grande ? { fontSize: 18 } : {}),
   } as React.CSSProperties;

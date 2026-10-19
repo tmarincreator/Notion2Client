@@ -34,7 +34,7 @@ async function Formularios() {
 
 function Cargando() {
   return (
-    <div className="n2c-card flex max-w-[720px] flex-col gap-4 p-6" aria-busy="true" aria-label="Cargando la cuenta">
+    <div className="n2c-card flex max-w-[720px] flex-col gap-4 p-6" role="status" aria-label="Cargando la cuenta">
       <span className="n2c-skel" style={{ width: "35%", height: 20 }} />
       <span className="n2c-skel" style={{ width: "70%" }} />
     </div>

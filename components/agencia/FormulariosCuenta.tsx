@@ -1,6 +1,7 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useRef, useState } from "react";
+import { useEnfocarError } from "@/components/ui/useEnfocarError";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Input } from "@/components/ui/Campo";
 import { CampoContrasena } from "@/components/ui/CampoContrasena";
@@ -22,12 +23,15 @@ function Tarjeta({ titulo, descripcion, children }: { titulo: string; descripcio
 
 export function FormNombre({ inicial }: { inicial: string }) {
   const [estado, enviar, enviando] = useActionState(cambiarNombre, {});
+  const formulario = useRef<HTMLFormElement>(null);
+  useEnfocarError(formulario, estado);
   const [nombre, setNombre] = useState(inicial);
   const error = enviando ? undefined : estado.errores?.nombre;
 
   return (
     <Tarjeta titulo="Nombre de la agencia" descripcion="Es el nombre que ven tus clientes en sus portales.">
       <form
+        ref={formulario}
         className="flex flex-col gap-4"
         noValidate
         onSubmit={(e) => {
@@ -51,12 +55,15 @@ export function FormNombre({ inicial }: { inicial: string }) {
 
 export function FormCorreo({ actual }: { actual: string }) {
   const [estado, enviar, enviando] = useActionState(cambiarCorreo, {});
+  const formulario = useRef<HTMLFormElement>(null);
+  useEnfocarError(formulario, estado);
   const [correo, setCorreo] = useState("");
   const error = enviando ? undefined : estado.errores?.correo;
 
   return (
     <Tarjeta titulo="Correo electrónico" descripcion={`Ahora entras con ${actual}.`}>
       <form
+        ref={formulario}
         className="flex flex-col gap-4"
         noValidate
         onSubmit={(e) => {
@@ -90,11 +97,14 @@ export function FormContrasena() {
     }
     return resultado;
   }, {});
+  const formulario = useRef<HTMLFormElement>(null);
+  useEnfocarError(formulario, estado);
   const errores = enviando ? {} : (estado.errores ?? {});
 
   return (
     <Tarjeta titulo="Contraseña" descripcion="Para cambiarla necesitas la contraseña actual.">
       <form
+        ref={formulario}
         className="flex flex-col gap-4"
         noValidate
         onSubmit={(e) => {

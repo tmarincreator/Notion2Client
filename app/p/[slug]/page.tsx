@@ -72,7 +72,7 @@ async function Portal({ params }: { params: PageProps<"/p/[slug]">["params"] }) 
 
 function Cargando() {
   return (
-    <div className="flex min-h-screen items-center justify-center" aria-busy="true" aria-label="Cargando portal">
+    <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Cargando portal">
       <span className="n2c-skel w-40" />
     </div>
   );

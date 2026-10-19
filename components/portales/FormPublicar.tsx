@@ -1,6 +1,7 @@
 "use client";
 
-import { startTransition, useActionState, useState, useTransition } from "react";
+import { startTransition, useActionState, useRef, useState, useTransition } from "react";
+import { useEnfocarError } from "@/components/ui/useEnfocarError";
 import { Icono } from "@/components/ui/Icono";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { Campo } from "@/components/ui/Campo";
@@ -42,6 +43,8 @@ export function FormPublicar({
   const [copiado, setCopiado] = useState(false);
   const publicado = estadoPortal === "publicado";
   const errorPass = guardandoPass ? null : (estadoPass.errores?.contrasena ?? null);
+  const formularioPass = useRef<HTMLFormElement>(null);
+  useEnfocarError(formularioPass, estadoPass);
 
   function guardarContrasena(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +69,7 @@ export function FormPublicar({
 
   return (
     <div className="flex flex-col gap-6">
-      <form className="flex flex-col gap-4" onSubmit={guardarContrasena} noValidate>
+      <form ref={formularioPass} className="flex flex-col gap-4" onSubmit={guardarContrasena} noValidate>
         <AvisoFormulario error={guardandoPass ? undefined : estadoPass.error} ok={guardandoPass ? undefined : estadoPass.ok} />
         <Campo
           id="pt-pass"
