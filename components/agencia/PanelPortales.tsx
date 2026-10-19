@@ -88,6 +88,7 @@ export function PanelPortales({ portales, notion }: { portales: Portal[]; notion
                 <Link className="n2c-link" href="/ajustes">{notion.mensaje} Revisar</Link>
               </>
             )}
+            {portales.length > 0 && <span>· {resumenPortales(portales)}</span>}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -183,6 +184,14 @@ export function PanelPortales({ portales, notion }: { portales: Portal[]; notion
       </div>
     </>
   );
+}
+
+/** "5 portales · 3 publicados" (o "1 portal · ninguno publicado"). */
+function resumenPortales(portales: Portal[]) {
+  const total = portales.length;
+  const publicados = portales.filter((p) => p.estado === "publicado").length;
+  const textoPublicados = publicados === 0 ? "ninguno publicado" : `${publicados} ${publicados === 1 ? "publicado" : "publicados"}`;
+  return `${total} ${total === 1 ? "portal" : "portales"} · ${textoPublicados}`;
 }
 
 export function PanelPortalesCargando() {
