@@ -73,8 +73,10 @@ export async function cargarContenido(config: {
   logo_path: string | null;
   fuente_notion_id: string;
   propiedades_visibles: string[];
+  /** Token de Notion de la agencia dueña del portal. */
+  token: string | null;
 }): Promise<ResultadoNotion<DatosPortal>> {
-  const base = await obtenerBase(config.fuente_notion_id);
+  const base = await obtenerBase(config.token, config.fuente_notion_id);
   if (!base.ok) return base;
 
   // Solo propiedades que existen hoy en la base y están marcadas como visibles.
@@ -82,7 +84,7 @@ export async function cargarContenido(config: {
   const visibles = base.datos.propiedades.filter((p) => config.propiedades_visibles.includes(p.id)).map((p) => p.id);
   const pedir = titulo ? [...new Set([titulo.id, ...visibles])] : visibles;
 
-  const registros = await leerRegistros(config.fuente_notion_id, { propiedadesVisibles: pedir, limite: 200 });
+  const registros = await leerRegistros(config.token, config.fuente_notion_id, { propiedadesVisibles: pedir, limite: 200 });
   if (!registros.ok) return registros;
 
   const { entregables, etiquetaFecha } = construirEntregables(base.datos, registros.datos, visibles);

@@ -1,11 +1,12 @@
 import "server-only";
 import { isFullDataSource, isFullPage } from "@notionhq/client";
-import { getNotionClient, tokenVisible } from "./cliente";
+import { getNotionClient } from "./cliente";
 import { conNotion } from "./errores";
 import { leerPropiedades, leerValor, textoPlano, type PropiedadLeida, type ValorLeido } from "./propiedades";
 
 /*
-  Operaciones de lectura sobre Notion. Todas devuelven { ok, datos } o
+  Operaciones de lectura sobre Notion. Todas reciben el token de la agencia
+  (null si no ha conectado Notion) y devuelven { ok, datos } o
   { ok: false, error } con un mensaje ya preparado para la pantalla.
 
   Nota: desde la versión 2025-09-03 de la API, una "base de datos" de Notion
@@ -13,7 +14,7 @@ import { leerPropiedades, leerValor, textoPlano, type PropiedadLeida, type Valor
   elige y lo que leemos son las fuentes de datos; las llamamos "bases" en la app.
 */
 
-export type ConexionLeida = { espacio: string; integracion: string; tokenVisible: string | null };
+export type ConexionLeida = { espacio: string; integracion: string };
 
 export type BaseResumen = { id: string; nombre: string; url: string; editada: string };
 
@@ -22,18 +23,18 @@ export type BaseDetalle = BaseResumen & { propiedades: PropiedadLeida[] };
 export type Registro = { id: string; valores: Record<string, ValorLeido> };
 
 /** Comprueba que el token funciona y devuelve el espacio de trabajo conectado. */
-export function comprobarConexion() {
+export function comprobarConexion(token: string | null) {
   return conNotion(async (): Promise<ConexionLeida> => {
-    const yo = await getNotionClient().users.me();
+    const yo = await getNotionClient(token).users.me();
     const espacio = yo.type === "bot" && "workspace_name" in yo.bot ? yo.bot.workspace_name : null;
-    return { espacio: espacio ?? "Notion", integracion: yo.name ?? "Integración", tokenVisible: tokenVisible() };
+    return { espacio: espacio ?? "Notion", integracion: yo.name ?? "Integración" };
   });
 }
 
 /** Bases (fuentes de datos) compartidas con la integración. */
-export function listarBases() {
+export function listarBases(token: string | null) {
   return conNotion(async (): Promise<BaseResumen[]> => {
-    const notion = getNotionClient();
+    const notion = getNotionClient(token);
     const resultados = [];
     let cursor: string | undefined;
     do {
@@ -56,9 +57,9 @@ export function listarBases() {
 }
 
 /** Nombre y propiedades (con su tipo) de una base. */
-export function obtenerBase(id: string) {
+export function obtenerBase(token: string | null, id: string) {
   return conNotion(async (): Promise<BaseDetalle> => {
-    const f = await getNotionClient().dataSources.retrieve({ data_source_id: id });
+    const f = await getNotionClient(token).dataSources.retrieve({ data_source_id: id });
     if (!isFullDataSource(f)) throw new Error("Respuesta parcial de Notion");
     return {
       id: f.id,
@@ -75,12 +76,12 @@ export function obtenerBase(id: string) {
   `propiedadesVisibles` (por id): las ocultas se descartan aquí, en el servidor,
   y nunca llegan al navegador del cliente.
 */
-export function leerRegistros(id: string, opciones: { propiedadesVisibles: string[]; limite?: number }) {
+export function leerRegistros(token: string | null, id: string, opciones: { propiedadesVisibles: string[]; limite?: number }) {
   const visibles = new Set(opciones.propiedadesVisibles);
   const limite = opciones.limite ?? 100;
 
   return conNotion(async (): Promise<Registro[]> => {
-    const notion = getNotionClient();
+    const notion = getNotionClient(token);
     const registros: Registro[] = [];
     let cursor: string | undefined;
 
@@ -108,6 +109,6 @@ export function leerRegistros(id: string, opciones: { propiedadesVisibles: strin
 }
 
 /** Muestra pequeña para la vista de prueba al configurar un portal. */
-export function leerMuestra(id: string, propiedadesVisibles: string[]) {
-  return leerRegistros(id, { propiedadesVisibles, limite: 5 });
+export function leerMuestra(token: string | null, id: string, propiedadesVisibles: string[]) {
+  return leerRegistros(token, id, { propiedadesVisibles, limite: 5 });
 }

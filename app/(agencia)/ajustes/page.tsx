@@ -7,8 +7,9 @@ import { BotonActualizar } from "@/components/agencia/BotonActualizar";
 import { FormMarcaAgencia } from "@/components/agencia/FormMarcaAgencia";
 import { obtenerUsuario } from "@/lib/auth";
 import { obtenerMarca } from "@/lib/agencia";
+import { FormConexionNotion } from "@/components/agencia/FormConexionNotion";
 import { comprobarConexion, listarBases } from "@/lib/notion/bases";
-import type { ErrorNotion } from "@/lib/notion/errores";
+import { conexionAgencia, tokenAgencia } from "@/lib/notion/conexion";
 
 export const metadata: Metadata = { title: "Marca y Notion · Notion2Client" };
 
@@ -47,7 +48,19 @@ async function SeccionMarca() {
 async function SeccionNotion() {
   // Notion se consulta en cada visita: el estado de la conexión debe ser el actual.
   await connection();
-  const [conexion, bases] = await Promise.all([comprobarConexion(), listarBases()]);
+  const [guardada, token] = await Promise.all([conexionAgencia(), tokenAgencia()]);
+  const [conexion, bases] = token ? await Promise.all([comprobarConexion(token), listarBases(token)]) : [null, null];
+
+  // Hay conexión guardada pero el token no se puede descifrar (p. ej. cambió NOTION_TOKEN_KEY).
+  const error: { mensaje: string; extra?: string } | null =
+    guardada && !token
+      ? { mensaje: "No podemos leer el token guardado.", extra: "Vuelve a pegarlo abajo para reconectar Notion." }
+      : conexion && !conexion.ok
+        ? {
+            mensaje: conexion.error.mensaje,
+            extra: conexion.error.tipo === "token-invalido" ? "Genera un token nuevo en notion.so/profile/integrations y pégalo abajo." : undefined,
+          }
+        : null;
 
   return (
     <>
@@ -55,39 +68,45 @@ async function SeccionNotion() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="n2c-h3" id="h-notion">Conexión con Notion</h2>
-            {conexion.ok ? (
-              <Badge tono="exito">Conectado</Badge>
-            ) : conexion.error.tipo === "sin-token" ? (
+            {!guardada ? (
               <Badge tono="borrador">Desconectado</Badge>
-            ) : (
+            ) : error ? (
               <Badge tono="peligro">Error</Badge>
+            ) : (
+              <Badge tono="exito">Conectado</Badge>
             )}
           </div>
-          <BotonActualizar texto="Comprobar de nuevo" />
+          {guardada && <BotonActualizar texto="Comprobar de nuevo" />}
         </div>
 
-        {conexion.ok ? (
+        {guardada && conexion?.ok && (
           <dl className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
             <Dato etiqueta="Espacio de trabajo" valor={conexion.datos.espacio} />
             <Dato etiqueta="Integración" valor={conexion.datos.integracion} />
-            <Dato etiqueta="Credencial" valor={conexion.datos.tokenVisible ?? "—"} mono />
+            <Dato etiqueta="Credencial" valor={guardada.tokenVisible} mono />
           </dl>
-        ) : (
-          <AvisoError error={conexion.error} />
+        )}
+        {error && <AvisoError mensaje={error.mensaje} extra={error.extra} />}
+        {!guardada && (
+          <p className="n2c-small n2c-muted">
+            Conecta la integración de tu espacio de Notion. Notion2Client solo podrá leer las bases que compartas con ella.
+          </p>
         )}
 
+        <FormConexionNotion conectado={!!guardada} />
+
         <details className="n2c-small n2c-muted">
-          <summary className="cursor-pointer font-semibold text-[var(--ink)]">¿Cómo se obtiene la credencial?</summary>
+          <summary className="cursor-pointer font-semibold text-[var(--ink)]">¿Cómo se obtiene el token?</summary>
           <ol className="mt-2 flex list-decimal flex-col gap-1 pl-5">
             <li>Entra en notion.so/profile/integrations y crea una integración interna.</li>
             <li>En sus permisos basta con «Read content»: el portal solo lee.</li>
-            <li>Copia el token (empieza por «ntn_»).</li>
+            <li>Copia el token (empieza por «ntn_») y pégalo arriba.</li>
             <li>En cada base que quieras usar: ••• → Conexiones → añade tu integración.</li>
           </ol>
         </details>
       </section>
 
-      {conexion.ok && (
+      {conexion?.ok && bases && (
         <section className="n2c-card overflow-hidden" aria-labelledby="h-bases">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-[18px]">
             <div className="flex flex-col gap-0.5">
@@ -98,7 +117,7 @@ async function SeccionNotion() {
           </div>
 
           {!bases.ok ? (
-            <div className="p-5"><AvisoError error={bases.error} /></div>
+            <div className="p-5"><AvisoError mensaje={bases.error.mensaje} /></div>
           ) : bases.datos.length === 0 ? (
             <div className="n2c-empty">
               <span className="n2c-empty__icon"><Icono nombre="capas" /></span>
@@ -139,19 +158,13 @@ function Dato({ etiqueta, valor, mono = false }: { etiqueta: string; valor: stri
   );
 }
 
-function AvisoError({ error }: { error: ErrorNotion }) {
-  const textoExtra =
-    error.tipo === "sin-token"
-      ? "Añade NOTION_TOKEN en .env.local y reinicia el servidor."
-      : error.tipo === "token-invalido"
-        ? "Genera un token nuevo en notion.so/profile/integrations y sustitúyelo en .env.local."
-        : null;
+function AvisoError({ mensaje, extra }: { mensaje: string; extra?: string }) {
   return (
-    <div className={`n2c-banner ${error.tipo === "sin-token" ? "n2c-banner--warning" : "n2c-banner--danger"}`} role="alert">
+    <div className="n2c-banner n2c-banner--danger" role="alert">
       <Icono nombre="aviso" />
       <div className="n2c-banner__body">
-        <strong>{error.mensaje}</strong>
-        {textoExtra && <span>{textoExtra}</span>}
+        <strong>{mensaje}</strong>
+        {extra && <span>{extra}</span>}
       </div>
     </div>
   );

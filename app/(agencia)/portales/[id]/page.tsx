@@ -13,6 +13,7 @@ import { FormPublicar } from "@/components/portales/FormPublicar";
 import { obtenerUsuario } from "@/lib/auth";
 import { obtenerMarca } from "@/lib/agencia";
 import { listarBases, obtenerBase } from "@/lib/notion/bases";
+import { tokenAgencia } from "@/lib/notion/conexion";
 import type { ErrorNotion } from "@/lib/notion/errores";
 import { obtenerPortal, portalTieneContrasena } from "@/lib/portales/datos";
 import {
@@ -120,13 +121,13 @@ async function Asistente({
 }
 
 async function PasoBase({ id, actual }: { id: string; actual: string | null }) {
-  const bases = await listarBases();
+  const bases = await listarBases(await tokenAgencia());
   if (!bases.ok) return <ErrorNotionAviso error={bases.error} />;
   return <FormBase id={id} accion={elegirBase.bind(null, id)} bases={bases.datos} actual={actual} />;
 }
 
 async function PasoCampos({ id, fuente, visibles }: { id: string; fuente: string; visibles: string[] }) {
-  const base = await obtenerBase(fuente);
+  const base = await obtenerBase(await tokenAgencia(), fuente);
   if (!base.ok) return <ErrorNotionAviso error={base.error} volver={`/portales/${id}?paso=2`} />;
   return (
     <>

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { obtenerUsuario } from "@/lib/auth";
 import { obtenerBase } from "@/lib/notion/bases";
+import { tokenAgencia } from "@/lib/notion/conexion";
 import { obtenerPortal, portalTieneContrasena } from "@/lib/portales/datos";
 import { obtenerMarca } from "@/lib/agencia";
 import { esSlugDemo } from "@/lib/sample-data";
@@ -85,8 +86,8 @@ export async function elegirBase(id: string, _previo: EstadoFormulario, fuente: 
   const portal = await obtenerPortal(id);
   if (!portal) return { error: "Portal no encontrado." };
 
-  // Comprobamos que la integración puede leer la base antes de guardarla.
-  const base = await obtenerBase(fuente);
+  // Comprobamos que la integración de esta agencia puede leer la base antes de guardarla.
+  const base = await obtenerBase(await tokenAgencia(), fuente);
   if (!base.ok) return { error: base.error.mensaje };
 
   const cambio = portal.fuente_notion_id !== fuente;
@@ -104,7 +105,7 @@ export async function elegirBase(id: string, _previo: EstadoFormulario, fuente: 
 export async function guardarCampos(id: string, _previo: EstadoFormulario, visibles: string[]): Promise<EstadoFormulario> {
   const portal = await obtenerPortal(id);
   if (!portal?.fuente_notion_id) return { error: "Primero elige una base de datos." };
-  const base = await obtenerBase(portal.fuente_notion_id);
+  const base = await obtenerBase(await tokenAgencia(), portal.fuente_notion_id);
   if (!base.ok) return { error: base.error.mensaje };
 
   // Solo se guardan ids que existen de verdad en la base.

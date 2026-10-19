@@ -8,6 +8,7 @@ import { tieneAcceso } from "@/lib/portales/acceso";
 import { cargarContenido, inicialesDe, portalPublico } from "@/lib/portales/datos";
 import { portalDemo } from "@/lib/portales/demo";
 import { urlLogo } from "@/lib/agencia";
+import { tokenPortal } from "@/lib/notion/conexion";
 
 export async function generateMetadata(props: PageProps<"/p/[slug]">): Promise<Metadata> {
   // Consulta Supabase (que usa la hora actual): solo en tiempo de petición.
@@ -56,7 +57,7 @@ async function Portal({ params }: { params: PageProps<"/p/[slug]">["params"] }) 
   if (!publico!.fuente_notion_id) {
     return <VistaPortal datos={{ ...cabecera, slug, actualizado: "", etiquetaFecha: null, entregables: [] }} />;
   }
-  const contenido = await cargarContenido({ ...publico!, fuente_notion_id: publico!.fuente_notion_id });
+  const contenido = await cargarContenido({ ...publico!, fuente_notion_id: publico!.fuente_notion_id, token: await tokenPortal(slug) });
   if (!contenido.ok) {
     return (
       <VistaPortal

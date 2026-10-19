@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { VistaPortal } from "@/components/portal/VistaPortal";
 import { obtenerUsuario } from "@/lib/auth";
 import { obtenerMarca } from "@/lib/agencia";
+import { tokenAgencia } from "@/lib/notion/conexion";
 import { cargarContenido, obtenerPortal } from "@/lib/portales/datos";
 
 export const metadata: Metadata = { title: "Vista previa · Notion2Client", robots: { index: false, follow: false } };
@@ -40,7 +41,13 @@ async function VistaPrevia({ params }: { params: PageProps<"/vista-previa/[id]">
   if (!portal.fuente_notion_id) {
     return <VistaPortal datos={vacio} vistaPrevia={volver} error="Este portal todavía no tiene una base de datos de Notion." />;
   }
-  const contenido = await cargarContenido({ ...portal, fuente_notion_id: portal.fuente_notion_id, agencia: usuario.nombre, logo_path: marca.logoPath });
+  const contenido = await cargarContenido({
+    ...portal,
+    fuente_notion_id: portal.fuente_notion_id,
+    agencia: usuario.nombre,
+    logo_path: marca.logoPath,
+    token: await tokenAgencia(),
+  });
   if (!contenido.ok) return <VistaPortal datos={vacio} vistaPrevia={volver} error={contenido.error.mensaje} />;
   return <VistaPortal datos={contenido.datos} vistaPrevia={volver} />;
 }
