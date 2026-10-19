@@ -136,7 +136,9 @@ export async function fijarContrasena(id: string, _previo: EstadoFormulario, con
   const { error } = await supabase.rpc("fijar_contrasena_portal", { p_portal: id, p_contrasena: contrasena });
   if (error) return { error: "No hemos podido guardar la contraseña." };
   refrescar(id);
-  return { ok: "Contraseña guardada. Compártela con tu cliente por un canal privado." };
+  return {
+    ok: "Contraseña guardada. Compártela con tu cliente por un canal privado. Quien ya hubiera entrado tendrá que escribir la nueva.",
+  };
 }
 
 /** Lo que falta para poder publicar (vacío = listo). */

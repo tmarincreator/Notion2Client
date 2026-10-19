@@ -48,7 +48,7 @@ async function Portal({ params }: { params: PageProps<"/p/[slug]">["params"] }) 
     : demo!;
 
   // Sin la cookie de acceso no se lee nada de Notion ni se envía al navegador.
-  if (!(await tieneAcceso(slug, demo ? "demo" : "portal"))) {
+  if (!(await (demo ? tieneAcceso(slug, "demo", 0) : tieneAcceso(slug, "portal", publico!.acceso_version)))) {
     return <AccesoPortal slug={slug} cabecera={cabecera} demo={!!demo} />;
   }
 

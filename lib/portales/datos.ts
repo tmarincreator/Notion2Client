@@ -43,6 +43,8 @@ export type PortalPublico = {
   fuente_notion_id: string | null;
   propiedades_visibles: string[];
   actualizado: string;
+  /** Sube al cambiar la contraseña o despublicar: invalida las cookies de acceso. */
+  acceso_version: number;
 };
 
 /** Portal publicado por su enlace (para el cliente, sin sesión). */

@@ -8,7 +8,9 @@ import { connection } from "next/server";
   una cookie httpOnly firmada con PORTAL_SECRET. El navegador no puede leerla
   ni falsificarla, y los datos de Notion solo se envían si es válida.
   El tipo ("portal" o "demo") va firmado: una cookie de la demo nunca abre un
-  portal real aunque compartan enlace.
+  portal real aunque compartan enlace. También va firmada la versión de acceso
+  del portal, que sube al cambiar la contraseña o despublicarlo (migración 0007):
+  las cookies anteriores dejan de valer al momento. La demo usa la versión 0.
 */
 
 const DURACION_SEGUNDOS = 8 * 60 * 60;
@@ -16,7 +18,7 @@ const DURACION_SEGUNDOS = 8 * 60 * 60;
 export type TipoAcceso = "portal" | "demo";
 
 const nombreCookie = (slug: string) => `n2c-portal-${slug}`;
-const claveDe = (slug: string, tipo: TipoAcceso) => `${tipo}:${slug}`;
+const claveDe = (slug: string, tipo: TipoAcceso, version: number) => `${tipo}:${slug}:v${version}`;
 
 function firmar(texto: string) {
   const secreto = process.env.PORTAL_SECRET;
@@ -24,11 +26,11 @@ function firmar(texto: string) {
   return createHmac("sha256", secreto).update(texto).digest("base64url");
 }
 
-export async function concederAcceso(slug: string, tipo: TipoAcceso) {
+export async function concederAcceso(slug: string, tipo: TipoAcceso, version: number) {
   // La caducidad usa la hora actual: solo en tiempo de petición.
   await connection();
   const caduca = Math.floor(Date.now() / 1000) + DURACION_SEGUNDOS;
-  const contenido = `${claveDe(slug, tipo)}.${caduca}`;
+  const contenido = `${claveDe(slug, tipo, version)}.${caduca}`;
   const almacen = await cookies();
   almacen.set(nombreCookie(slug), `${contenido}.${firmar(contenido)}`, {
     httpOnly: true,
@@ -44,7 +46,7 @@ export async function retirarAcceso(slug: string) {
   almacen.set(nombreCookie(slug), "", { path: `/p/${slug}`, maxAge: 0 });
 }
 
-export async function tieneAcceso(slug: string, tipo: TipoAcceso) {
+export async function tieneAcceso(slug: string, tipo: TipoAcceso, version: number) {
   // Comprobar la caducidad usa la hora actual: solo en tiempo de petición.
   await connection();
   const valor = (await cookies()).get(nombreCookie(slug))?.value;
@@ -57,5 +59,5 @@ export async function tieneAcceso(slug: string, tipo: TipoAcceso) {
   if (firma.length !== esperada.length || !timingSafeEqual(firma, esperada)) return false;
 
   const [claveCookie, caduca] = [contenido.slice(0, contenido.lastIndexOf(".")), Number(contenido.split(".").pop())];
-  return claveCookie === claveDe(slug, tipo) && caduca > Date.now() / 1000;
+  return claveCookie === claveDe(slug, tipo, version) && caduca > Date.now() / 1000;
 }

@@ -6,7 +6,7 @@ import { buscarPortalCliente, CONTRASENA_DEMO } from "@/lib/sample-data";
 
 export type EstadoEntrada = { error?: string; ok?: boolean };
 
-type Intento = { resultado: "ok" | "incorrecta" | "bloqueado"; segundos_restantes: number };
+type Intento = { resultado: "ok" | "incorrecta" | "bloqueado"; segundos_restantes: number; acceso_version: number };
 
 /*
   El cliente escribe la contraseña: Supabase la compara con el hash y lleva la
@@ -28,14 +28,14 @@ export async function entrarPortal(slug: string, _previo: EstadoEntrada, contras
   }
 
   if (intento?.resultado === "ok") {
-    await concederAcceso(slug, "portal");
+    await concederAcceso(slug, "portal", intento.acceso_version);
     return { ok: true };
   }
 
   // Portales de demostración de la landing (no están en Supabase). Su cookie
   // es de tipo "demo": no abre ningún portal real aunque comparta enlace.
   if (buscarPortalCliente(slug) && contrasena === CONTRASENA_DEMO) {
-    await concederAcceso(slug, "demo");
+    await concederAcceso(slug, "demo", 0);
     return { ok: true };
   }
 
