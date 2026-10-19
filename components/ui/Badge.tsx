@@ -1,6 +1,8 @@
 /* Etiqueta de estado (Publicado, Borrador, En revisión, Sensible…). */
 
-export type TonoBadge = "exito" | "aviso" | "peligro" | "marca" | "borrador" | "archivado" | "neutro";
+import type { TonoBadge } from "@/lib/portales/tipos";
+
+export type { TonoBadge };
 
 const claseTono: Record<TonoBadge, string> = {
   exito: "n2c-badge--success",

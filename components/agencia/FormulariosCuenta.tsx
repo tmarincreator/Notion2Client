@@ -5,7 +5,7 @@ import { Boton } from "@/components/ui/Boton";
 import { Campo, Input } from "@/components/ui/Campo";
 import { CampoContrasena } from "@/components/ui/CampoContrasena";
 import { AvisoFormulario } from "@/components/portales/Pasos";
-import { cambiarContrasena, cambiarCorreo, cambiarNombre } from "@/app/(agencia)/cuenta/actions";
+import { cambiarContrasena, cambiarCorreo, cambiarNombre, type EstadoCuenta } from "@/app/(agencia)/cuenta/actions";
 
 /* Tarjeta de un ajuste de la cuenta: título, descripción y su formulario. */
 function Tarjeta({ titulo, descripcion, children }: { titulo: string; descripcion: string; children: React.ReactNode }) {
@@ -79,9 +79,17 @@ export function FormCorreo({ actual }: { actual: string }) {
 }
 
 export function FormContrasena() {
-  const [estado, enviar, enviando] = useActionState(cambiarContrasena, {});
   const [actual, setActual] = useState("");
   const [nueva, setNueva] = useState("");
+  // Los campos solo se vacían si el cambio salió bien: si hay un error, no hay que volver a escribirlo todo.
+  const [estado, enviar, enviando] = useActionState(async (previo: EstadoCuenta, datos: { actual: string; nueva: string }) => {
+    const resultado = await cambiarContrasena(previo, datos);
+    if (resultado.ok) {
+      setActual("");
+      setNueva("");
+    }
+    return resultado;
+  }, {});
   const errores = enviando ? {} : (estado.errores ?? {});
 
   return (
@@ -93,8 +101,6 @@ export function FormContrasena() {
           e.preventDefault();
           if (enviando) return;
           startTransition(() => enviar({ actual, nueva }));
-          setActual("");
-          setNueva("");
         }}
       >
         <AvisoFormulario error={enviando ? undefined : estado.error} ok={enviando ? undefined : estado.ok} />

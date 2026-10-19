@@ -1,8 +1,7 @@
 import "server-only";
-import type { TonoBadge } from "@/components/ui/Badge";
 import type { BaseDetalle, Registro } from "@/lib/notion/bases";
 import type { PropiedadLeida, ValorLeido } from "@/lib/notion/propiedades";
-import type { EntregablePortal, EstadoEntregable } from "./tipos";
+import type { EntregablePortal, EstadoEntregable, TonoBadge } from "./tipos";
 
 /*
   Convierte las filas de Notion en entregables del portal.

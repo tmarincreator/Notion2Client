@@ -83,6 +83,7 @@ async function Asistente({
           <FormDatos
             accion={guardarDatos.bind(null, id)}
             inicial={{ cliente: portal.cliente, nombre: portal.nombre, slug: portal.slug }}
+            publicado={portal.estado === "publicado"}
           />
         )}
 

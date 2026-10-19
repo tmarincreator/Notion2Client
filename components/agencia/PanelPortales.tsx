@@ -6,30 +6,31 @@ import { Icono } from "@/components/ui/Icono";
 import { Badge } from "@/components/ui/Badge";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { Input } from "@/components/ui/Campo";
-import { FilaPortal } from "./FilaPortal";
-import { restaurarPortal } from "@/app/(agencia)/portales/actions";
+import { FilaPortal, TarjetaPortal, type AccionPortal } from "./FilaPortal";
+import { archivarPortal, borrarPortal, restaurarPortal, type EstadoFormulario } from "@/app/(agencia)/portales/actions";
 import type { EstadoPortal, Portal } from "@/lib/portales/tipos";
 
 type Filtro = "todos" | EstadoPortal;
 export type EstadoNotion = { conectado: true; espacio: string } | { conectado: false; mensaje: string };
+type Aviso = { texto: string; error?: boolean };
 
-const pestanas: { id: Filtro; texto: string }[] = [
+const filtros: { id: Filtro; texto: string }[] = [
   { id: "todos", texto: "Todos" },
   { id: "publicado", texto: "Publicados" },
   { id: "borrador", texto: "Borradores" },
   { id: "archivado", texto: "Archivados" },
 ];
 
-/* Dashboard de la agencia: cabecera, pestañas, buscador y tabla de portales. */
+/* Dashboard de la agencia: cabecera, filtros, buscador y lista de portales. */
 export function PanelPortales({ portales, notion }: { portales: Portal[]; notion: EstadoNotion }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [, iniciar] = useTransition();
+  const [aviso, setAviso] = useState<Aviso | null>(null);
+  const [ocupado, iniciar] = useTransition();
 
   useEffect(() => {
     if (!aviso) return;
-    const t = setTimeout(() => setAviso(null), 2200);
+    const t = setTimeout(() => setAviso(null), aviso.error ? 6000 : 2500);
     return () => clearTimeout(t);
   }, [aviso]);
 
@@ -42,17 +43,32 @@ export function PanelPortales({ portales, notion }: { portales: Portal[]; notion
     const url = `${window.location.origin}/p/${slug}`;
     try {
       await navigator.clipboard.writeText(url);
-      setAviso("Enlace copiado");
+      setAviso({ texto: "Enlace copiado" });
     } catch {
-      setAviso("No se pudo copiar. Enlace: " + url);
+      setAviso({ texto: "No se pudo copiar. Enlace: " + url, error: true });
     }
   }
 
-  function restaurar(id: string) {
+  function ejecutar(accion: (id: string) => Promise<EstadoFormulario>, id: string) {
     iniciar(async () => {
-      await restaurarPortal(id);
-      setAviso("Portal restaurado como borrador");
+      const r = await accion(id);
+      setAviso(r.error ? { texto: r.error, error: true } : { texto: r.ok ?? "Hecho" });
     });
+  }
+
+  function alAccion(accion: AccionPortal, p: Portal) {
+    switch (accion) {
+      case "copiar":
+        return void copiarEnlace(p.slug);
+      case "restaurar":
+        return ejecutar(restaurarPortal, p.id);
+      case "archivar":
+        if (p.estado === "publicado" && !window.confirm(`¿Archivar «${p.nombre}»? Tu cliente dejará de poder abrirlo.`)) return;
+        return ejecutar(archivarPortal, p.id);
+      case "borrar":
+        if (!window.confirm(`¿Borrar «${p.nombre}» para siempre? No se puede deshacer. Tus datos de Notion no se tocan.`)) return;
+        return ejecutar(borrarPortal, p.id);
+    }
   }
 
   return (
@@ -106,16 +122,10 @@ export function PanelPortales({ portales, notion }: { portales: Portal[]; notion
         </div>
       ) : (
         <>
-          <div className="n2c-tabs flex-wrap" role="tablist" aria-label="Filtrar portales">
-            {pestanas.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className="n2c-tab"
-                role="tab"
-                aria-selected={filtro === t.id}
-                onClick={() => setFiltro(t.id)}
-              >
+          {/* Son filtros de la misma lista, no pestañas: botones con aria-pressed. */}
+          <div className="n2c-tabs flex-wrap" role="group" aria-label="Filtrar portales por estado">
+            {filtros.map((t) => (
+              <button key={t.id} type="button" className="n2c-tab" aria-pressed={filtro === t.id} onClick={() => setFiltro(t.id)}>
                 {t.texto}
                 <span className="n2c-count">
                   {t.id === "todos" ? portales.length : portales.filter((p) => p.estado === t.id).length}
@@ -125,8 +135,9 @@ export function PanelPortales({ portales, notion }: { portales: Portal[]; notion
           </div>
 
           {filas.length > 0 ? (
-            <div className="n2c-card overflow-x-auto">
-              <table className="n2c-table min-w-[720px]">
+            <div className="n2c-card overflow-hidden" aria-busy={ocupado}>
+              <table className="n2c-table max-[760px]:hidden">
+                <caption className="sr-only">Portales</caption>
                 <thead>
                   <tr>
                     <th style={{ width: "32%" }}>Portal</th>
@@ -138,16 +149,21 @@ export function PanelPortales({ portales, notion }: { portales: Portal[]; notion
                 </thead>
                 <tbody>
                   {filas.map((p) => (
-                    <FilaPortal key={p.id} portal={p} onCopiar={copiarEnlace} onRestaurar={restaurar} />
+                    <FilaPortal key={p.id} portal={p} ocupado={ocupado} onAccion={alAccion} />
                   ))}
                 </tbody>
               </table>
+              <ul className="min-[761px]:hidden" aria-label="Portales">
+                {filas.map((p) => (
+                  <TarjetaPortal key={p.id} portal={p} ocupado={ocupado} onAccion={alAccion} />
+                ))}
+              </ul>
             </div>
           ) : (
             <div className="n2c-card n2c-empty">
               <span className="n2c-empty__icon"><Icono nombre="buscar" /></span>
               <h2 className="n2c-h3">No hay portales que coincidan</h2>
-              <p>Prueba con otro nombre de cliente o de portal, o cambia de pestaña.</p>
+              <p>Prueba con otro nombre de cliente o de portal, o cambia de filtro.</p>
               {texto && (
                 <Boton variante="secundario" onClick={() => setBusqueda("")}>Borrar búsqueda</Boton>
               )}
@@ -156,12 +172,15 @@ export function PanelPortales({ portales, notion }: { portales: Portal[]; notion
         </>
       )}
 
-      {aviso && (
-        <div className="n2c-toast" role="status">
-          <Icono nombre="check" />
-          {aviso}
-        </div>
-      )}
+      {/* La región existe siempre: los lectores de pantalla solo anuncian cambios en regiones ya montadas. */}
+      <div role="status" aria-live="polite">
+        {aviso && (
+          <div className={`n2c-toast ${aviso.error ? "n2c-toast--error" : ""}`.trim()}>
+            <Icono nombre={aviso.error ? "aviso" : "check"} />
+            {aviso.texto}
+          </div>
+        )}
+      </div>
     </>
   );
 }
@@ -170,7 +189,7 @@ export function PanelPortalesCargando() {
   return (
     <>
       <h1 className="n2c-h1">Portales</h1>
-      <div className="n2c-card py-2" aria-busy="true" aria-label="Cargando portales">
+      <div className="n2c-card py-2" role="status" aria-label="Cargando portales">
         {[1, 2, 3, 4].map((n) => (
           <div key={n} className="flex items-center gap-6 border-b border-[var(--border)] px-5 py-4 last:border-b-0">
             <div className="flex flex-[2] flex-col gap-2">

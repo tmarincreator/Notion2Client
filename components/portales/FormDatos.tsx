@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
+import { Icono } from "@/components/ui/Icono";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { Campo, Input } from "@/components/ui/Campo";
 import type { DatosBasicos, EstadoFormulario } from "@/app/(agencia)/portales/actions";
@@ -22,9 +23,12 @@ export function proponerSlug(texto: string) {
 export function FormDatos({
   accion,
   inicial,
+  publicado = false,
 }: {
   accion: (previo: EstadoFormulario, datos: DatosBasicos) => Promise<EstadoFormulario>;
   inicial?: DatosBasicos;
+  /** El portal ya está publicado: cambiar el enlace rompe el que tiene el cliente. */
+  publicado?: boolean;
 }) {
   const [estado, enviarAccion, enviando] = useActionState(accion, {});
   const [cliente, setCliente] = useState(inicial?.cliente ?? "");
@@ -91,6 +95,18 @@ export function FormDatos({
           />
         </div>
       </Campo>
+
+      {publicado && inicial && slug.trim() !== inicial.slug && (
+        <div className="n2c-banner n2c-banner--warning" role="status">
+          <Icono nombre="aviso" />
+          <div className="n2c-banner__body">
+            <strong>El enlace actual dejará de funcionar</strong>
+            <span>
+              Tu cliente tiene <span className="n2c-mono">/p/{inicial.slug}</span>. Si lo cambias, envíale el nuevo y tendrá que volver a escribir la contraseña.
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap justify-end gap-3">
         <BotonEnlace variante="fantasma" href="/dashboard">Cancelar</BotonEnlace>

@@ -1,5 +1,3 @@
-import type { TonoBadge } from "@/components/ui/Badge";
-
 /*
   Tipos compartidos entre servidor y navegador.
   Lo que llega al navegador del cliente (DatosPortal) ya está filtrado:
@@ -7,6 +5,9 @@ import type { TonoBadge } from "@/components/ui/Badge";
 */
 
 export type EstadoPortal = "borrador" | "publicado" | "archivado";
+
+/** Color de una etiqueta de estado (ver components/ui/Badge). */
+export type TonoBadge = "exito" | "aviso" | "peligro" | "marca" | "borrador" | "archivado" | "neutro";
 
 /** Fila de la tabla `portales` (sin el hash de la contraseña). */
 export type Portal = {
