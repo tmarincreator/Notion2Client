@@ -6,16 +6,16 @@ import { AccesoPortal } from "@/components/portal/AccesoPortal";
 import { VistaPortal } from "@/components/portal/VistaPortal";
 import { tieneAcceso } from "@/lib/portales/acceso";
 import { cargarContenido, portalPublico } from "@/lib/portales/datos";
-import { inicialesDe } from "@/lib/formato";
-import { portalDemo } from "@/lib/portales/demo";
 import { urlLogo } from "@/lib/agencia";
+import { inicialesDe } from "@/lib/formato";
 import { tokenPortal } from "@/lib/notion/conexion";
+import { entrarPortal, salirPortal } from "./actions";
 
 export async function generateMetadata(props: PageProps<"/p/[slug]">): Promise<Metadata> {
   // Consulta Supabase (que usa la hora actual): solo en tiempo de petición.
   await connection();
   const { slug } = await props.params;
-  const portal = (await portalPublico(slug)) ?? portalDemo(slug);
+  const portal = await portalPublico(slug);
   return { title: portal ? `${portal.nombre} · ${portal.cliente}` : "Portal no disponible" };
 }
 
@@ -36,38 +36,35 @@ async function Portal({ params }: { params: PageProps<"/p/[slug]">["params"] }) 
   await connection();
   const { slug } = await params;
   const publico = await portalPublico(slug);
-  const demo = publico ? null : portalDemo(slug);
-  if (!publico && !demo) notFound();
+  if (!publico) notFound();
 
-  const cabecera = publico
-    ? {
-        nombre: publico.nombre,
-        cliente: publico.cliente,
-        color: publico.color,
-        agencia: { nombre: publico.agencia, iniciales: inicialesDe(publico.agencia), logo: urlLogo(publico.logo_path) },
-      }
-    : demo!;
+  const cabecera = {
+    nombre: publico.nombre,
+    cliente: publico.cliente,
+    color: publico.color,
+    agencia: { nombre: publico.agencia, iniciales: inicialesDe(publico.agencia), logo: urlLogo(publico.logo_path) },
+  };
 
   // Sin la cookie de acceso no se lee nada de Notion ni se envía al navegador.
-  if (!(await (demo ? tieneAcceso(slug, "demo", 0) : tieneAcceso(slug, "portal", publico!.acceso_version)))) {
-    return <AccesoPortal slug={slug} cabecera={cabecera} demo={!!demo} />;
+  if (!(await tieneAcceso(slug, "portal", publico.acceso_version))) {
+    return <AccesoPortal cabecera={cabecera} accion={entrarPortal.bind(null, slug)} />;
   }
 
-  if (demo) return <VistaPortal datos={demo} />;
+  const salir = salirPortal.bind(null, slug);
+  const vacio = { ...cabecera, slug, actualizado: "", etiquetaFecha: null, entregables: [] };
+  if (!publico.fuente_notion_id) return <VistaPortal datos={vacio} salir={salir} />;
 
-  if (!publico!.fuente_notion_id) {
-    return <VistaPortal datos={{ ...cabecera, slug, actualizado: "", etiquetaFecha: null, entregables: [] }} />;
-  }
-  const contenido = await cargarContenido({ ...publico!, fuente_notion_id: publico!.fuente_notion_id, token: await tokenPortal(slug) });
+  const contenido = await cargarContenido({ ...publico, fuente_notion_id: publico.fuente_notion_id, token: await tokenPortal(slug) });
   if (!contenido.ok) {
     return (
       <VistaPortal
-        datos={{ ...cabecera, slug, actualizado: "", etiquetaFecha: null, entregables: [] }}
+        datos={vacio}
+        salir={salir}
         error="No hemos podido cargar la información del proyecto. Inténtalo de nuevo en unos minutos."
       />
     );
   }
-  return <VistaPortal datos={contenido.datos} />;
+  return <VistaPortal datos={contenido.datos} salir={salir} />;
 }
 
 function Cargando() {

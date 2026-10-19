@@ -1,43 +1,38 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icono } from "@/components/ui/Icono";
 import { LogoAgencia } from "@/components/ui/Logo";
-import { estiloAcento } from "@/lib/color";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
-import { salirPortal } from "@/app/p/[slug]/actions";
+import { estiloAcento } from "@/lib/color";
 import type { DatosPortal } from "@/lib/portales/tipos";
-import { TarjetaDato } from "./TarjetaDato";
-import { BadgeEntregable, DetalleEntregable } from "./DetalleEntregable";
+import { ResumenPortal } from "./ResumenPortal";
+import { ListaEntregables } from "./ListaEntregables";
 
 /*
   Portal del cliente: cabecera con la marca de la agencia, resumen y entregables.
   `datos` ya llega filtrado del servidor: solo trae las propiedades visibles.
-  Con `vistaPrevia` lo usa la agencia antes de publicar (sin botón de salir).
+  `salir` borra la cookie de acceso (portal real o demo). Con `vistaPrevia` lo
+  usa la agencia antes de publicar (sin botón de salir).
 */
 export function VistaPortal({
   datos,
   error,
+  salir,
   vistaPrevia,
 }: {
   datos: DatosPortal;
   error?: string;
+  salir?: () => Promise<void>;
   vistaPrevia?: { volver: string };
 }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
-  const estilo = estiloAcento(datos.color);
-
-  function salir() {
-    iniciar(async () => {
-      await salirPortal(datos.slug);
-      router.refresh();
-    });
-  }
+  const actualizar = () => iniciar(() => router.refresh());
 
   return (
-    <div style={estilo} className="min-h-screen">
+    <div style={estiloAcento(datos.color)} className="min-h-screen">
       {vistaPrevia && (
         <div className="border-b border-[var(--border)] bg-[var(--warning-soft)] text-[var(--warning-ink)]">
           <div className="wrap flex min-h-12 flex-wrap items-center justify-between gap-3 py-2">
@@ -59,12 +54,22 @@ export function VistaPortal({
             <span className="text-[15px] font-bold">{datos.agencia.nombre}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Boton variante="fantasma" tamano="sm" disabled={pendiente} onClick={() => iniciar(() => router.refresh())}>
+            <Boton variante="fantasma" tamano="sm" disabled={pendiente} onClick={actualizar} aria-label="Actualizar">
               <Icono nombre="actualizar" />
               <span className="hide-sm">{pendiente ? "Actualizando…" : "Actualizar"}</span>
             </Boton>
-            {!vistaPrevia && (
-              <Boton variante="fantasma" tamano="sm" disabled={pendiente} onClick={salir}>
+            {salir && !vistaPrevia && (
+              <Boton
+                variante="fantasma"
+                tamano="sm"
+                disabled={pendiente}
+                onClick={() =>
+                  iniciar(async () => {
+                    await salir();
+                    router.refresh();
+                  })
+                }
+              >
                 <Icono nombre="salir" />
                 Salir
               </Boton>
@@ -96,107 +101,27 @@ export function VistaPortal({
         )}
 
         {error ? (
-          <div className="n2c-card n2c-empty">
+          <div className="n2c-card n2c-empty" role="alert">
             <span className="n2c-empty__icon"><Icono nombre="aviso" /></span>
             <h2 className="n2c-h3">No se ha podido cargar el proyecto</h2>
             <p>{error}</p>
-            <Boton variante="secundario" disabled={pendiente} onClick={() => iniciar(() => router.refresh())}>
+            <Boton variante="secundario" disabled={pendiente} onClick={actualizar}>
               Volver a intentar
             </Boton>
           </div>
         ) : datos.entregables.length === 0 ? (
-          <SinEntregables />
+          <div className="n2c-card n2c-empty">
+            <span className="n2c-empty__icon"><Icono nombre="capas" /></span>
+            <h2 className="n2c-h3">Todavía no hay entregables</h2>
+            <p>Cuando tu contacto añada tareas o entregables al proyecto, aparecerán aquí.</p>
+          </div>
         ) : (
-          <Contenido datos={datos} />
+          <>
+            <ResumenPortal entregables={datos.entregables} />
+            <ListaEntregables entregables={datos.entregables} etiquetaFecha={datos.etiquetaFecha} />
+          </>
         )}
       </main>
-    </div>
-  );
-}
-
-function Contenido({ datos }: { datos: DatosPortal }) {
-  const items = datos.entregables;
-  const [seleccionado, setSeleccionado] = useState(
-    (items.find((i) => i.estado?.enRevision) ?? items[0]).id,
-  );
-  const detalle = useRef<HTMLElement>(null);
-  const sel = items.find((i) => i.id === seleccionado) ?? items[0];
-
-  const conEstado = items.some((i) => i.estado);
-  const completados = items.filter((i) => i.estado?.completado).length;
-  const progreso = Math.round((completados / items.length) * 100);
-  const proxima = items.find((i) => !i.estado?.completado && i.fecha);
-  const enRevision = items.filter((i) => i.estado?.enRevision);
-
-  function elegir(id: string) {
-    setSeleccionado(id);
-    // En móvil el detalle queda debajo de la lista: lo acercamos a la vista.
-    if (window.innerWidth < 860) {
-      const sinMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      detalle.current?.scrollIntoView({ behavior: sinMovimiento ? "auto" : "smooth", block: "start" });
-    }
-  }
-
-  return (
-    <>
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
-        {conEstado && (
-          <TarjetaDato
-            etiqueta="Progreso"
-            valor={`${progreso}%`}
-            detalle={`${completados} de ${items.length} completados`}
-            progreso={progreso}
-          />
-        )}
-        {proxima && <TarjetaDato etiqueta="Próxima entrega" valor={proxima.fecha!} detalle={proxima.titulo} />}
-        {conEstado && (
-          <TarjetaDato
-            etiqueta="Pendiente de tu revisión"
-            valor={enRevision.length}
-            detalle={enRevision.length ? `Revisa: ${enRevision[0].titulo}` : "Nada pendiente por ahora"}
-          />
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-start gap-6">
-        <section className="n2c-card min-w-0 flex-[999_1_480px] overflow-hidden" aria-labelledby="h-entregables">
-          <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-[18px]">
-            <h2 className="n2c-h3" id="h-entregables">Entregables</h2>
-            <span className="n2c-caption n2c-muted">{items.length} elementos</span>
-          </div>
-          <ul>
-            {items.map((it) => (
-              <li key={it.id} className="border-b border-[var(--border)] last:border-b-0">
-                <button
-                  type="button"
-                  className="row-btn flex flex-wrap items-center justify-between gap-3 px-5 py-3.5"
-                  style={it.id === sel.id ? { background: "var(--surface-sunken)" } : undefined}
-                  aria-pressed={it.id === sel.id}
-                  onClick={() => elegir(it.id)}
-                >
-                  <span className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold">{it.titulo}</span>
-                    {it.fecha && <span className="n2c-small n2c-muted">{datos.etiquetaFecha ?? "Fecha"}: {it.fecha}</span>}
-                  </span>
-                  <BadgeEntregable estado={it.estado} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <DetalleEntregable ref={detalle} entregable={sel} etiquetaFecha={datos.etiquetaFecha} />
-      </div>
-    </>
-  );
-}
-
-function SinEntregables() {
-  return (
-    <div className="n2c-card n2c-empty">
-      <span className="n2c-empty__icon"><Icono nombre="capas" /></span>
-      <h2 className="n2c-h3">Todavía no hay entregables</h2>
-      <p>Cuando tu contacto añada tareas o entregables al proyecto, aparecerán aquí.</p>
     </div>
   );
 }

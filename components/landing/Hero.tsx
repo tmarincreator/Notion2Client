@@ -25,7 +25,7 @@ export function Hero() {
           Crear cuenta gratis
           <Icono nombre="flecha" />
         </BotonEnlace>
-        <BotonEnlace variante="secundario" tamano="lg" href="/p/lumen-cafe">
+        <BotonEnlace variante="secundario" tamano="lg" href="/demo/lumen-cafe">
           Ver un portal de ejemplo
         </BotonEnlace>
       </div>

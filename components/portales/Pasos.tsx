@@ -1,13 +1,6 @@
 import Link from "next/link";
 import { Icono } from "@/components/ui/Icono";
-
-export const PASOS = [
-  "Datos del cliente",
-  "Base de Notion",
-  "Campos visibles",
-  "Marca y vista previa",
-  "Contraseña y publicación",
-] as const;
+import { PASOS } from "@/lib/portales/asistente";
 
 /*
   Indicador de pasos del asistente. Con `id` (portal ya creado) cada paso es un

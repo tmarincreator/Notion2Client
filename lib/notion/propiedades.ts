@@ -1,12 +1,14 @@
 import "server-only";
 import type { DataSourceObjectResponse, PageObjectResponse, RichTextItemResponse } from "@notionhq/client";
-import type { TipoPropiedadNotion } from "@/lib/sample-data";
 
 /*
   Convierte la estructura y los valores de Notion a formatos sencillos que las
   pantallas ya saben mostrar. Las propiedades que aún no sabemos mostrar se
   marcan como "no compatibles" en vez de romper el portal.
 */
+
+/** Tipos de propiedad que el portal sabe mostrar, con el nombre que ve la agencia. */
+export type TipoPropiedadNotion = "Título" | "Estado" | "Fecha" | "Selección" | "Texto" | "Archivos" | "Persona" | "Número";
 
 type ConfigPropiedad = DataSourceObjectResponse["properties"][string];
 type ValorPropiedad = PageObjectResponse["properties"][string];

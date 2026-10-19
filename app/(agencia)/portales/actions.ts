@@ -9,7 +9,6 @@ import { tokenAgencia } from "@/lib/notion/conexion";
 import { obtenerPortal, portalTieneContrasena } from "@/lib/portales/datos";
 import { obtenerMarca } from "@/lib/agencia";
 import { COLOR_VALIDO } from "@/lib/formato";
-import { esSlugDemo } from "@/lib/sample-data";
 import { pendientesDe, type EstadoPortal, type Portal } from "@/lib/portales/tipos";
 
 /*
@@ -34,7 +33,6 @@ function validarDatos(d: DatosBasicos) {
   else if (d.nombre.trim().length > 120) errores.nombre = "Máximo 120 caracteres.";
   if (d.slug.length < 3 || d.slug.length > 60) errores.slug = "El enlace debe tener entre 3 y 60 caracteres.";
   else if (!SLUG_VALIDO.test(d.slug)) errores.slug = "Usa solo minúsculas, números y guiones (sin guion al principio ni al final).";
-  else if (esSlugDemo(d.slug)) errores.slug = "Este enlace está reservado. Prueba con otro.";
   return errores;
 }
 
