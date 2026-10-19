@@ -185,8 +185,12 @@ body { margin: 0; background: var(--bg); }
 @media (max-width: 760px) {
   .wrap { padding-left: 16px; padding-right: 16px; }
   .hide-sm { display: none !important; }
-  .side-nav { flex-direction: row; flex-wrap: wrap; }
+  /* Menú lateral → barra superior compacta: logotipo y una fila de enlaces que se desplaza si no cabe. */
+  .n2c-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .n2c-side .n2c-wordmark { padding: 0 4px; }
+  .side-nav { flex-direction: row; flex: 1 1 100%; overflow-x: auto; scrollbar-width: none; }
+  .side-nav .n2c-nav { flex: none; }
   .side-foot { display: none !important; }
-  .n2c-side { border-right: 0; border-bottom: 1px solid var(--border); }
+  .n2c-h1 { font-size: 26px; line-height: 34px; }
 }
 }

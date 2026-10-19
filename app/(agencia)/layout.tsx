@@ -21,7 +21,7 @@ export default function LayoutAgencia({ children }: LayoutProps<"/">) {
           </Suspense>
         }
       />
-      <main className="flex max-w-[1280px] min-w-0 flex-[999_1_560px] flex-col gap-6 px-4 pt-8 pb-10 sm:px-10">
+      <main className="flex max-w-[1280px] min-w-0 flex-[999_1_560px] flex-col gap-6 px-4 pt-6 pb-10 sm:px-10 sm:pt-8">
         {children}
       </main>
     </div>

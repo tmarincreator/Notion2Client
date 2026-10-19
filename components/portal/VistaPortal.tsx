@@ -52,7 +52,7 @@ export function VistaPortal({
         </div>
       )}
 
-      <header className="border-b border-[var(--border)] bg-white">
+      <header className="border-b border-[var(--border)] bg-[var(--surface)]">
         <div className="wrap flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
           <div className="flex items-center gap-3">
             <LogoAgencia iniciales={datos.agencia.iniciales} logoUrl={datos.agencia.logo} />

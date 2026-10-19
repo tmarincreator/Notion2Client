@@ -14,7 +14,7 @@ type Modo = "acceso" | "registro";
 type Errores = Partial<Record<"agencia" | "correo" | "contrasena", string>>;
 
 const pestanaActiva =
-  "h-9 rounded-lg bg-white text-sm font-semibold text-[var(--ink)] shadow-[0_1px_2px_rgba(17,22,27,0.08)] grid place-items-center";
+  "h-9 rounded-lg bg-[var(--surface)] text-sm font-semibold text-[var(--ink)] shadow-[0_1px_2px_rgba(17,22,27,0.08)] grid place-items-center";
 const pestanaInactiva = "h-9 rounded-lg text-sm font-medium text-[var(--ink-muted)] grid place-items-center";
 
 /*
