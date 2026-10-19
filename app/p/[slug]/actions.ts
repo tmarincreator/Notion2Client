@@ -21,17 +21,21 @@ export async function entrarPortal(slug: string, _previo: EstadoEntrada, contras
     p_contrasena: contrasena,
     p_origen: await origenCliente(),
   });
-  if (error) console.error("[portal] No se pudo comprobar la contraseña:", error);
   const intento = (data as Intento[] | null)?.[0];
+  // Fallo nuestro (Supabase caído, clave secreta mal configurada…): no culpar a la contraseña del cliente.
+  if (error || !intento) {
+    console.error("[portal] No se pudo comprobar la contraseña:", error ?? "respuesta vacía");
+    return { error: "No hemos podido comprobar la contraseña ahora mismo. Inténtalo de nuevo en unos minutos." };
+  }
 
-  if (intento?.resultado === "bloqueado") {
+  if (intento.resultado === "bloqueado") {
     const minutos = Math.max(1, Math.ceil(intento.segundos_restantes / 60));
     return {
       error: `Demasiados intentos fallidos. Por seguridad, el acceso está bloqueado. Vuelve a intentarlo en ${minutos} ${minutos === 1 ? "minuto" : "minutos"}.`,
     };
   }
 
-  if (intento?.resultado === "ok") {
+  if (intento.resultado === "ok") {
     await concederAcceso(slug, "portal", intento.acceso_version);
     return { ok: true };
   }

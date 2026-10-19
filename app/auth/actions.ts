@@ -5,6 +5,7 @@ import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { urlSitio } from "@/lib/url";
 import { CORREO_VALIDO } from "@/lib/formato";
+import { borrarRecuperacion, recuperacionValida } from "@/lib/recuperacion";
 
 export type DatosAcceso = { correo: string; contrasena: string; agencia?: string };
 /** `aviso`: mensaje positivo (p. ej. "revisa tu correo") en lugar de un error. */
@@ -98,14 +99,22 @@ export async function pedirRecuperacion(_previo: EstadoAcceso, correo: string): 
   };
 }
 
+const ENLACE_CADUCADO = "El enlace ha caducado. Pide otro desde «¿Olvidaste tu contraseña?».";
+
+/*
+  Solo con una sesión abierta desde un enlace de recuperación del correo
+  (lib/recuperacion.ts): una sesión cualquiera no basta para cambiar la
+  contraseña sin la actual. Para eso está Cuenta, que pide la actual.
+*/
 export async function fijarNuevaContrasena(_previo: EstadoAcceso, nueva: string): Promise<EstadoAcceso> {
   if (nueva.length < 8) return { error: "La contraseña necesita al menos 8 caracteres." };
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims) return { error: "El enlace ha caducado. Pide otro desde «¿Olvidaste tu contraseña?»." };
+  if (!data?.claims || !(await recuperacionValida(data.claims.sub))) return { error: ENLACE_CADUCADO };
 
   const { error } = await supabase.auth.updateUser({ password: nueva });
   if (error) return { error: mensajeDe(error) };
+  await borrarRecuperacion();
   redirect("/dashboard");
 }
 

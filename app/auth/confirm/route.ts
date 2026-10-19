@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { marcarRecuperacion } from "@/lib/recuperacion";
 
 /*
   Destino del enlace del correo de confirmación de Supabase.
@@ -21,15 +22,20 @@ export async function GET(request: NextRequest) {
   const siguiente = searchParams.get("siguiente");
 
   const supabase = await createClient();
-  let correcto = false;
+  let usuarioId: string | null = null;
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    correcto = !error;
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) usuarioId = data.user?.id ?? null;
   } else if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    correcto = !error;
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+    if (!error) usuarioId = data.user?.id ?? null;
   }
+  const correcto = usuarioId !== null;
+
+  // Enlace de recuperación válido: deja elegir contraseña nueva sin la actual (solo 15 minutos).
+  const esRecuperacion = type === "recovery" || siguiente === "/nueva-contrasena";
+  if (usuarioId && esRecuperacion) await marcarRecuperacion(usuarioId);
 
   const destino = request.nextUrl.clone();
   destino.search = "";
