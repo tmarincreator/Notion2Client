@@ -1,4 +1,5 @@
 import "server-only";
+import { formatearFecha } from "@/lib/formato";
 import type { BaseDetalle, Registro } from "@/lib/notion/bases";
 import type { PropiedadLeida, ValorLeido } from "@/lib/notion/propiedades";
 import type { EntregablePortal, EstadoEntregable, TonoBadge } from "./tipos";
@@ -13,12 +14,6 @@ import type { EntregablePortal, EstadoEntregable, TonoBadge } from "./tipos";
   - Enlaces → archivos y propiedades URL.
   - El resto se muestra como "etiqueta: valor" en el detalle.
 */
-
-const formatoFecha = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", timeZone: "UTC" });
-
-export function formatearFecha(iso: string) {
-  return formatoFecha.format(new Date(iso.length === 10 ? `${iso}T00:00:00Z` : iso));
-}
 
 const TONOS: [RegExp, TonoBadge, "completado" | "revision" | null][] = [
   [/complet|entregad|hecho|terminad|finaliz|done|aprobad/i, "exito", "completado"],

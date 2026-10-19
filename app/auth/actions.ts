@@ -4,12 +4,11 @@ import { redirect } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { urlSitio } from "@/lib/url";
+import { CORREO_VALIDO } from "@/lib/formato";
 
 export type DatosAcceso = { correo: string; contrasena: string; agencia?: string };
 /** `aviso`: mensaje positivo (p. ej. "revisa tu correo") en lugar de un error. */
 export type EstadoAcceso = { error?: string; aviso?: string };
-
-const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Mensajes en español para los códigos de error de Supabase Auth.
 const MENSAJES: Record<string, string> = {

@@ -2,16 +2,9 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { inicialesDe } from "@/lib/formato";
 
 export type Usuario = { id: string; nombre: string; correo: string; iniciales: string };
-
-const inicialesDe = (texto: string) =>
-  texto
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((palabra) => palabra[0]!.toUpperCase())
-    .join("");
 
 /*
   Usuario de la sesión actual. Úsalo siempre desde el servidor: valida el

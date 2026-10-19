@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { obtenerUsuario } from "@/lib/auth";
 import { urlSitio } from "@/lib/url";
+import { CORREO_VALIDO } from "@/lib/formato";
 
 /*
   Cambios en la cuenta de la agencia (Supabase Auth). Tras cada cambio se
@@ -11,8 +12,6 @@ import { urlSitio } from "@/lib/url";
 */
 
 export type EstadoCuenta = { error?: string; errores?: Record<string, string>; ok?: string };
-
-const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function refrescar() {
   revalidatePath("/", "layout");

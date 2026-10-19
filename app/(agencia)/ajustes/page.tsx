@@ -10,6 +10,7 @@ import { obtenerMarca } from "@/lib/agencia";
 import { FormConexionNotion } from "@/components/agencia/FormConexionNotion";
 import { comprobarConexion, listarBases } from "@/lib/notion/bases";
 import { conexionAgencia, tokenAgencia } from "@/lib/notion/conexion";
+import { formatearMomento } from "@/lib/formato";
 
 export const metadata: Metadata = { title: "Marca y Notion · Notion2Client" };
 
@@ -132,7 +133,7 @@ async function SeccionNotion() {
                     <Icono nombre="capas" style={{ color: "var(--ink-muted)" }} />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="truncate text-[15px] font-semibold">{b.nombre}</span>
-                      <span className="n2c-small n2c-muted">Editada {formatearFecha(b.editada)}</span>
+                      <span className="n2c-small n2c-muted">Editada {formatearMomento(b.editada)}</span>
                     </span>
                   </span>
                   <a href={b.url} target="_blank" rel="noreferrer" className="n2c-link n2c-small flex items-center gap-1.5">
@@ -181,8 +182,3 @@ function SeccionCargando() {
   );
 }
 
-const formatoFecha = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", year: "numeric" });
-
-function formatearFecha(iso: string) {
-  return formatoFecha.format(new Date(iso));
-}

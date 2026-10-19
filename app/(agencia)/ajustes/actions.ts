@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { obtenerUsuario } from "@/lib/auth";
 import { obtenerMarca } from "@/lib/agencia";
+import { COLOR_VALIDO } from "@/lib/formato";
 import { comprobarConexion } from "@/lib/notion/bases";
 import { cifrarToken } from "@/lib/notion/cifrado";
 import { tokenVisible } from "@/lib/notion/cliente";
@@ -22,7 +23,7 @@ function refrescar() {
 }
 
 export async function guardarColorAgencia(_previo: EstadoMarca, color: string): Promise<EstadoMarca> {
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return { error: "Elige un color válido." };
+  if (!COLOR_VALIDO.test(color)) return { error: "Elige un color válido." };
   await obtenerUsuario();
   const supabase = await createClient();
   const { error } = await supabase.from("agencias").upsert({ color: color.toLowerCase() }, { onConflict: "id" });

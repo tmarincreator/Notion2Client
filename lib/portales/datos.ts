@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { urlLogo } from "@/lib/agencia";
+import { haceTiempo, inicialesDe } from "@/lib/formato";
 import { obtenerBase, leerRegistros } from "@/lib/notion/bases";
 import type { ResultadoNotion } from "@/lib/notion/errores";
 import { construirEntregables } from "./contenido";
@@ -54,13 +55,8 @@ export async function portalPublico(slug: string): Promise<PortalPublico | null>
   return (data as PortalPublico[] | null)?.[0] ?? null;
 }
 
-export const inicialesDe = (texto: string) =>
-  texto
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((palabra) => palabra[0]!.toUpperCase())
-    .join("") || "A";
+/** Máximo de entregables que se muestran en un portal. */
+const LIMITE_REGISTROS = 200;
 
 /**
   Lee de Notion el contenido del portal aplicando las reglas de visibilidad.
@@ -86,10 +82,13 @@ export async function cargarContenido(config: {
   const visibles = base.datos.propiedades.filter((p) => config.propiedades_visibles.includes(p.id)).map((p) => p.id);
   const pedir = titulo ? [...new Set([titulo.id, ...visibles])] : visibles;
 
-  const registros = await leerRegistros(config.token, config.fuente_notion_id, { propiedadesVisibles: pedir, limite: 200 });
-  if (!registros.ok) return registros;
+  const leidos = await leerRegistros(config.token, config.fuente_notion_id, { propiedadesVisibles: pedir, limite: LIMITE_REGISTROS });
+  if (!leidos.ok) return leidos;
+  const { registros, hayMas } = leidos.datos;
 
-  const { entregables, etiquetaFecha } = construirEntregables(base.datos, registros.datos, visibles);
+  const { entregables, etiquetaFecha } = construirEntregables(base.datos, registros, visibles);
+  // Última edición en Notion de cualquier entregable (las fechas ISO en UTC se ordenan como texto).
+  const ultimaEdicion = registros.reduce((max, r) => (r.editado > max ? r.editado : max), "");
   return {
     ok: true,
     datos: {
@@ -98,7 +97,9 @@ export async function cargarContenido(config: {
       cliente: config.cliente,
       color: config.color,
       agencia: { nombre: config.agencia, iniciales: inicialesDe(config.agencia), logo: urlLogo(config.logo_path) },
-      actualizado: "ahora mismo",
+      // Se calcula al pedir la página: la página del portal siempre se genera en cada visita.
+      actualizado: ultimaEdicion ? haceTiempo(ultimaEdicion, Date.now()) : "",
+      limiteAlcanzado: hayMas ? LIMITE_REGISTROS : null,
       etiquetaFecha,
       entregables,
     },

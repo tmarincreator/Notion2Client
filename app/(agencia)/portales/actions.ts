@@ -8,6 +8,7 @@ import { obtenerBase } from "@/lib/notion/bases";
 import { tokenAgencia } from "@/lib/notion/conexion";
 import { obtenerPortal, portalTieneContrasena } from "@/lib/portales/datos";
 import { obtenerMarca } from "@/lib/agencia";
+import { COLOR_VALIDO } from "@/lib/formato";
 import { esSlugDemo } from "@/lib/sample-data";
 import { pendientesDe, type EstadoPortal, type Portal } from "@/lib/portales/tipos";
 
@@ -146,7 +147,7 @@ export async function guardarCampos(id: string, _previo: EstadoFormulario, visib
 }
 
 export async function guardarMarca(id: string, _previo: EstadoFormulario, color: string): Promise<EstadoFormulario> {
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return { error: "Elige un color válido." };
+  if (!COLOR_VALIDO.test(color)) return { error: "Elige un color válido." };
   const resultado = await actualizarPortal(id, { color: color.toLowerCase() });
   if (resultado === "no-encontrado") return { error: NO_ENCONTRADO };
   if (resultado === "error") return { error: "No hemos podido guardar el color." };

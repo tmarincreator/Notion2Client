@@ -47,8 +47,10 @@ export type DatosPortal = {
   cliente: string;
   color: string;
   agencia: { nombre: string; iniciales: string; logo: string | null };
-  /** "hace 5 min", "18 oct"… */
+  /** Última edición en Notion: "hace 5 min", "el 18 oct 2025"… ("" si no se sabe). */
   actualizado: string;
+  /** La base tiene más entregables de los que se muestran (solo los N editados más recientemente). */
+  limiteAlcanzado?: number | null;
   /** Nombre de la propiedad de fecha visible ("Fecha de entrega"), si hay. */
   etiquetaFecha: string | null;
   entregables: EntregablePortal[];

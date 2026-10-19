@@ -84,6 +84,16 @@ export function VistaPortal({
           )}
         </div>
 
+        {/* Solo para la agencia: el cliente no necesita saber que hay un límite. */}
+        {vistaPrevia && datos.limiteAlcanzado && (
+          <div className="n2c-banner n2c-banner--warning" role="status">
+            <Icono nombre="aviso" />
+            <div className="n2c-banner__body">
+              Esta base tiene más de {datos.limiteAlcanzado} registros: el portal muestra solo los {datos.limiteAlcanzado} editados más recientemente.
+            </div>
+          </div>
+        )}
+
         {error ? (
           <div className="n2c-card n2c-empty">
             <span className="n2c-empty__icon"><Icono nombre="aviso" /></span>

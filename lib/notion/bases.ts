@@ -20,7 +20,10 @@ export type BaseResumen = { id: string; nombre: string; url: string; editada: st
 
 export type BaseDetalle = BaseResumen & { propiedades: PropiedadLeida[] };
 
-export type Registro = { id: string; valores: Record<string, ValorLeido> };
+export type Registro = { id: string; editado: string; valores: Record<string, ValorLeido> };
+
+/** `hayMas`: la base tiene más registros que el límite pedido (se devuelven los editados más recientemente). */
+export type RegistrosLeidos = { registros: Registro[]; hayMas: boolean };
 
 /** Comprueba que el token funciona y devuelve el espacio de trabajo conectado. */
 export function comprobarConexion(token: string | null) {
@@ -80,16 +83,19 @@ export function leerRegistros(token: string | null, id: string, opciones: { prop
   const visibles = new Set(opciones.propiedadesVisibles);
   const limite = opciones.limite ?? 100;
 
-  return conNotion(async (): Promise<Registro[]> => {
+  return conNotion(async (): Promise<RegistrosLeidos> => {
     const notion = getNotionClient(token);
     const registros: Registro[] = [];
     let cursor: string | undefined;
+    let hayMas = false;
 
     do {
       const pagina = await notion.dataSources.query({
         data_source_id: id,
         start_cursor: cursor,
         page_size: Math.min(100, limite - registros.length),
+        // Si hay que cortar por el límite, que se queden los editados más recientemente.
+        sorts: [{ timestamp: "last_edited_time", direction: "descending" }],
         // Pedimos a Notion solo las propiedades visibles.
         filter_properties: [...visibles],
       });
@@ -99,16 +105,12 @@ export function leerRegistros(token: string | null, id: string, opciones: { prop
         for (const valor of Object.values(fila.properties)) {
           if (visibles.has(valor.id)) valores[valor.id] = leerValor(valor);
         }
-        registros.push({ id: fila.id, valores });
+        registros.push({ id: fila.id, editado: fila.last_edited_time, valores });
       }
       cursor = pagina.has_more ? (pagina.next_cursor ?? undefined) : undefined;
+      hayMas = !!cursor && registros.length >= limite;
     } while (cursor && registros.length < limite);
 
-    return registros;
+    return { registros, hayMas };
   });
-}
-
-/** Muestra pequeña para la vista de prueba al configurar un portal. */
-export function leerMuestra(token: string | null, id: string, propiedadesVisibles: string[]) {
-  return leerRegistros(token, id, { propiedadesVisibles, limite: 5 });
 }

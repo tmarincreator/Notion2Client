@@ -8,11 +8,10 @@ import { Wordmark } from "@/components/ui/Logo";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Input } from "@/components/ui/Campo";
 import { CampoContrasena } from "@/components/ui/CampoContrasena";
+import { CORREO_VALIDO } from "@/lib/formato";
 
 type Modo = "acceso" | "registro";
 type Errores = Partial<Record<"agencia" | "correo" | "contrasena", string>>;
-
-const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const pestanaActiva =
   "h-9 rounded-lg bg-white text-sm font-semibold text-[var(--ink)] shadow-[0_1px_2px_rgba(17,22,27,0.08)] grid place-items-center";
