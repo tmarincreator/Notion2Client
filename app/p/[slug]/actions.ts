@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { concederAcceso, retirarAcceso } from "@/lib/portales/acceso";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { concederAcceso, origenCliente, retirarAcceso } from "@/lib/portales/acceso";
 import { buscarPortalCliente, CONTRASENA_DEMO } from "@/lib/sample-data";
 
 export type EstadoEntrada = { error?: string; ok?: boolean };
@@ -10,14 +10,19 @@ type Intento = { resultado: "ok" | "incorrecta" | "bloqueado"; segundos_restante
 
 /*
   El cliente escribe la contraseña: Supabase la compara con el hash y lleva la
-  cuenta de fallos (5 seguidos bloquean el portal 5 minutos). Si es correcta,
-  se da la cookie de acceso.
+  cuenta de fallos (5 seguidos desde una IP bloquean esa IP 5 minutos; 100 en
+  una hora bloquean el portal 15). Si es correcta, se da la cookie de acceso.
+  La función solo la puede llamar el servidor: así nadie se inventa su IP.
 */
 export async function entrarPortal(slug: string, _previo: EstadoEntrada, contrasena: string): Promise<EstadoEntrada> {
   if (!contrasena) return { error: "Escribe la contraseña del portal." };
 
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("intentar_acceso_portal", { p_slug: slug, p_contrasena: contrasena });
+  const { data, error } = await createAdminClient().rpc("intentar_acceso_portal", {
+    p_slug: slug,
+    p_contrasena: contrasena,
+    p_origen: await origenCliente(),
+  });
+  if (error) console.error("[portal] No se pudo comprobar la contraseña:", error);
   const intento = (data as Intento[] | null)?.[0];
 
   if (intento?.resultado === "bloqueado") {

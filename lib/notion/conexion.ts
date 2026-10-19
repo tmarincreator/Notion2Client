@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { descifrarToken } from "./cifrado";
 
 /*
@@ -24,9 +25,11 @@ export async function tokenAgencia() {
   return typeof data === "string" ? descifrarToken(data) : null;
 }
 
-/** Token de la agencia dueña de un portal publicado (para el cliente, sin sesión). */
+/**
+  Token de la agencia dueña de un portal publicado (para el cliente, sin sesión).
+  Solo lo puede pedir el servidor (migración 0008): llámalo después de comprobar la cookie de acceso.
+*/
 export async function tokenPortal(slug: string) {
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("token_notion_portal", { p_slug: slug });
+  const { data } = await createAdminClient().rpc("token_notion_portal", { p_slug: slug });
   return typeof data === "string" ? descifrarToken(data) : null;
 }

@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { connection } from "next/server";
 
 /*
@@ -24,6 +24,22 @@ function firmar(texto: string) {
   const secreto = process.env.PORTAL_SECRET;
   if (!secreto || secreto.length < 32) throw new Error("Falta PORTAL_SECRET (mínimo 32 caracteres) en .env.local");
   return createHmac("sha256", secreto).update(texto).digest("base64url");
+}
+
+/*
+  Origen del intento de contraseña, para bloquear por IP (migración 0008).
+  Se guarda un HMAC de la IP, nunca la IP en claro. La IP la ponen el proxy o
+  la plataforma de hosting (Vercel sobrescribe x-forwarded-for); si la app se
+  sirve sin proxy delante, el navegador podría inventársela, y entonces solo
+  queda el tope global por portal.
+*/
+export async function origenCliente() {
+  const cabeceras = await headers();
+  const ip =
+    cabeceras.get("x-real-ip")?.trim() ||
+    cabeceras.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "desconocido";
+  return firmar(`origen:${ip}`);
 }
 
 export async function concederAcceso(slug: string, tipo: TipoAcceso, version: number) {
