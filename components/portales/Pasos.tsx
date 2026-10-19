@@ -52,23 +52,3 @@ export function Pasos({ actual, id, completos = [] }: { actual: number; id?: str
     </nav>
   );
 }
-
-export function AvisoFormulario({ error, ok }: { error?: string; ok?: string }) {
-  if (error) {
-    return (
-      <div className="n2c-banner n2c-banner--danger" role="alert">
-        <Icono nombre="aviso" />
-        <div className="n2c-banner__body">{error}</div>
-      </div>
-    );
-  }
-  if (ok) {
-    return (
-      <div className="n2c-banner" role="status">
-        <Icono nombre="check" />
-        <div className="n2c-banner__body">{ok}</div>
-      </div>
-    );
-  }
-  return null;
-}

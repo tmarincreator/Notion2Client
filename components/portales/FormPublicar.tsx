@@ -7,7 +7,7 @@ import { Campo } from "@/components/ui/Campo";
 import { CampoContrasena } from "@/components/ui/CampoContrasena";
 import type { EstadoFormulario } from "@/app/(agencia)/portales/actions";
 import { REQUISITOS_PUBLICAR, type EstadoPortal } from "@/lib/portales/tipos";
-import { AvisoFormulario } from "./Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 
 /* Paso 5: contraseña, comprobación final y publicar / despublicar. */
 export function FormPublicar({

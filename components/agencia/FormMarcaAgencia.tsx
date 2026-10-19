@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icono } from "@/components/ui/Icono";
 import { Boton } from "@/components/ui/Boton";
 import { LogoAgencia } from "@/components/ui/Logo";
-import { AvisoFormulario } from "@/components/portales/Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 import { createClient } from "@/lib/supabase/client";
 import { guardarColorAgencia, guardarLogo, quitarLogo, type EstadoMarca } from "@/app/(agencia)/ajustes/actions";
 

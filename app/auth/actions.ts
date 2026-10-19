@@ -21,6 +21,7 @@ const MENSAJES: Record<string, string> = {
   signup_disabled: "El registro de cuentas nuevas está cerrado ahora mismo.",
   over_request_rate_limit: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
   over_email_send_rate_limit: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+  same_password: "La contraseña nueva debe ser distinta de la anterior.",
 };
 
 const mensajeDe = (error: AuthError) =>
@@ -72,6 +73,39 @@ export async function registrarse(_previo: EstadoAcceso, datos: DatosAcceso): Pr
     return { aviso: `Te hemos enviado un correo a ${datos.correo.trim()}. Abre el enlace para confirmar tu cuenta y entrar.` };
   }
 
+  redirect("/dashboard");
+}
+
+/*
+  Recuperar la contraseña: Supabase envía un enlace que pasa por /auth/confirm
+  y abre /nueva-contrasena con una sesión temporal.
+  La respuesta es la misma exista o no la cuenta, para no revelar qué correos están registrados.
+*/
+export async function pedirRecuperacion(_previo: EstadoAcceso, correo: string): Promise<EstadoAcceso> {
+  const limpio = correo.trim();
+  if (!CORREO_VALIDO.test(limpio)) return { error: "Este correo no parece válido. Revisa que tenga @ y dominio." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(limpio, {
+    redirectTo: `${urlSitio()}/auth/confirm?siguiente=/nueva-contrasena`,
+  });
+  if (error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
+    return { error: mensajeDe(error) };
+  }
+  if (error) console.error("[auth] No se pudo enviar el correo de recuperación:", error);
+  return {
+    aviso: `Si hay una cuenta con ${limpio}, te hemos enviado un enlace para elegir una contraseña nueva. Revisa también la carpeta de spam.`,
+  };
+}
+
+export async function fijarNuevaContrasena(_previo: EstadoAcceso, nueva: string): Promise<EstadoAcceso> {
+  if (nueva.length < 8) return { error: "La contraseña necesita al menos 8 caracteres." };
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims) return { error: "El enlace ha caducado. Pide otro desde «¿Olvidaste tu contraseña?»." };
+
+  const { error } = await supabase.auth.updateUser({ password: nueva });
+  if (error) return { error: mensajeDe(error) };
   redirect("/dashboard");
 }
 

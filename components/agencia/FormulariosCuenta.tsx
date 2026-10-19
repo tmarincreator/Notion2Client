@@ -4,7 +4,7 @@ import { startTransition, useActionState, useState } from "react";
 import { Boton } from "@/components/ui/Boton";
 import { Campo, Input } from "@/components/ui/Campo";
 import { CampoContrasena } from "@/components/ui/CampoContrasena";
-import { AvisoFormulario } from "@/components/portales/Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 import { cambiarContrasena, cambiarCorreo, cambiarNombre, type EstadoCuenta } from "@/app/(agencia)/cuenta/actions";
 
 /* Tarjeta de un ajuste de la cuenta: título, descripción y su formulario. */

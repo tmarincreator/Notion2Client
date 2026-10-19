@@ -6,7 +6,7 @@ import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { BotonActualizar } from "@/components/agencia/BotonActualizar";
 import type { EstadoFormulario } from "@/app/(agencia)/portales/actions";
 import type { BaseResumen } from "@/lib/notion/bases";
-import { AvisoFormulario } from "./Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 
 /* Paso 2: elegir la base de datos de Notion de la que sale el portal. */
 export function FormBase({

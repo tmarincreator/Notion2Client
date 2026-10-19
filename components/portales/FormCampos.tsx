@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import type { EstadoFormulario } from "@/app/(agencia)/portales/actions";
 import type { PropiedadLeida } from "@/lib/notion/propiedades";
-import { AvisoFormulario } from "./Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 
 /*
   Paso 3: qué propiedades verá el cliente. Todo empieza oculto; las que

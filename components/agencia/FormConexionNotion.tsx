@@ -4,7 +4,7 @@ import { startTransition, useActionState, useState, useTransition } from "react"
 import { Boton } from "@/components/ui/Boton";
 import { Campo } from "@/components/ui/Campo";
 import { CampoContrasena } from "@/components/ui/CampoContrasena";
-import { AvisoFormulario } from "@/components/portales/Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 import { conectarNotion, desconectarNotion, type EstadoMarca } from "@/app/(agencia)/ajustes/actions";
 
 /*

@@ -5,7 +5,7 @@ import { Icono } from "@/components/ui/Icono";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { Campo, Input } from "@/components/ui/Campo";
 import type { DatosBasicos, EstadoFormulario } from "@/app/(agencia)/portales/actions";
-import { AvisoFormulario } from "./Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 
 /** "Lumen Café" → "lumen-cafe" */
 export function proponerSlug(texto: string) {

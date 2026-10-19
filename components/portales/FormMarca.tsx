@@ -5,7 +5,7 @@ import { Icono } from "@/components/ui/Icono";
 import { Boton, BotonEnlace } from "@/components/ui/Boton";
 import { LogoAgencia } from "@/components/ui/Logo";
 import type { EstadoFormulario } from "@/app/(agencia)/portales/actions";
-import { AvisoFormulario } from "./Pasos";
+import { AvisoFormulario } from "@/components/ui/AvisoFormulario";
 
 const SUGERIDOS = ["#c2410c", "#2563eb", "#0f766e", "#7c3aed", "#be123c", "#111827"];
 

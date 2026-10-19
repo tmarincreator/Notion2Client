@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const RUTAS_PRIVADAS = ["/dashboard", "/ajustes", "/cuenta", "/portales", "/vista-previa"];
-const RUTAS_ACCESO = ["/login", "/registro"];
+const RUTAS_PRIVADAS = ["/dashboard", "/ajustes", "/cuenta", "/portales", "/vista-previa", "/nueva-contrasena"];
+const RUTAS_ACCESO = ["/login", "/registro", "/recuperar"];
 
 const empiezaPor = (ruta: string, prefijos: string[]) =>
   prefijos.some((p) => ruta === p || ruta.startsWith(`${p}/`));
