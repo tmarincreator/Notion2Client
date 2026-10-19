@@ -178,3 +178,8 @@ export const CONTRASENA_DEMO = "demo1234";
 export function buscarPortalCliente(slug: string) {
   return portalesCliente.find((p) => p.slug === slug);
 }
+
+/* Enlaces de la demo: ninguna agencia puede usarlos (también lo impide Supabase, migración 0004). */
+export function esSlugDemo(slug: string) {
+  return portalesCliente.some((p) => p.slug === slug);
+}

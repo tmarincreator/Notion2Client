@@ -7,11 +7,16 @@ import { connection } from "next/server";
   Acceso del cliente a un portal: tras escribir la contraseña correcta se guarda
   una cookie httpOnly firmada con PORTAL_SECRET. El navegador no puede leerla
   ni falsificarla, y los datos de Notion solo se envían si es válida.
+  El tipo ("portal" o "demo") va firmado: una cookie de la demo nunca abre un
+  portal real aunque compartan enlace.
 */
 
 const DURACION_SEGUNDOS = 8 * 60 * 60;
 
+export type TipoAcceso = "portal" | "demo";
+
 const nombreCookie = (slug: string) => `n2c-portal-${slug}`;
+const claveDe = (slug: string, tipo: TipoAcceso) => `${tipo}:${slug}`;
 
 function firmar(texto: string) {
   const secreto = process.env.PORTAL_SECRET;
@@ -19,11 +24,11 @@ function firmar(texto: string) {
   return createHmac("sha256", secreto).update(texto).digest("base64url");
 }
 
-export async function concederAcceso(slug: string) {
+export async function concederAcceso(slug: string, tipo: TipoAcceso) {
   // La caducidad usa la hora actual: solo en tiempo de petición.
   await connection();
   const caduca = Math.floor(Date.now() / 1000) + DURACION_SEGUNDOS;
-  const contenido = `${slug}.${caduca}`;
+  const contenido = `${claveDe(slug, tipo)}.${caduca}`;
   const almacen = await cookies();
   almacen.set(nombreCookie(slug), `${contenido}.${firmar(contenido)}`, {
     httpOnly: true,
@@ -39,7 +44,7 @@ export async function retirarAcceso(slug: string) {
   almacen.set(nombreCookie(slug), "", { path: `/p/${slug}`, maxAge: 0 });
 }
 
-export async function tieneAcceso(slug: string) {
+export async function tieneAcceso(slug: string, tipo: TipoAcceso) {
   // Comprobar la caducidad usa la hora actual: solo en tiempo de petición.
   await connection();
   const valor = (await cookies()).get(nombreCookie(slug))?.value;
@@ -51,6 +56,6 @@ export async function tieneAcceso(slug: string) {
   const esperada = Buffer.from(firmar(contenido));
   if (firma.length !== esperada.length || !timingSafeEqual(firma, esperada)) return false;
 
-  const [slugCookie, caduca] = [contenido.slice(0, contenido.lastIndexOf(".")), Number(contenido.split(".").pop())];
-  return slugCookie === slug && caduca > Date.now() / 1000;
+  const [claveCookie, caduca] = [contenido.slice(0, contenido.lastIndexOf(".")), Number(contenido.split(".").pop())];
+  return claveCookie === claveDe(slug, tipo) && caduca > Date.now() / 1000;
 }

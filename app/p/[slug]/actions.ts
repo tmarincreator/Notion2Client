@@ -27,17 +27,21 @@ export async function entrarPortal(slug: string, _previo: EstadoEntrada, contras
     };
   }
 
-  // Portales de demostración de la landing (no están en Supabase).
-  const demo = intento?.resultado !== "ok" && buscarPortalCliente(slug) && contrasena === CONTRASENA_DEMO;
-
-  if (intento?.resultado !== "ok" && !demo) {
-    // Pequeña espera para frenar a quien pruebe contraseñas en bucle.
-    await new Promise((r) => setTimeout(r, 600));
-    return { error: "La contraseña no es correcta. Compruébala e inténtalo de nuevo." };
+  if (intento?.resultado === "ok") {
+    await concederAcceso(slug, "portal");
+    return { ok: true };
   }
 
-  await concederAcceso(slug);
-  return { ok: true };
+  // Portales de demostración de la landing (no están en Supabase). Su cookie
+  // es de tipo "demo": no abre ningún portal real aunque comparta enlace.
+  if (buscarPortalCliente(slug) && contrasena === CONTRASENA_DEMO) {
+    await concederAcceso(slug, "demo");
+    return { ok: true };
+  }
+
+  // Pequeña espera para frenar a quien pruebe contraseñas en bucle.
+  await new Promise((r) => setTimeout(r, 600));
+  return { error: "La contraseña no es correcta. Compruébala e inténtalo de nuevo." };
 }
 
 export async function salirPortal(slug: string) {
