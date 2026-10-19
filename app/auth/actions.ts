@@ -1,9 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { urlSitio } from "@/lib/url";
 
 export type DatosAcceso = { correo: string; contrasena: string; agencia?: string };
 /** `aviso`: mensaje positivo (p. ej. "revisa tu correo") en lugar de un error. */
@@ -52,14 +52,11 @@ export async function registrarse(_previo: EstadoAcceso, datos: DatosAcceso): Pr
   }
 
   // El enlace del correo de confirmación vuelve a /auth/confirm de esta misma web.
-  const cabeceras = await headers();
-  const origen = cabeceras.get("origin") ?? `http://${cabeceras.get("host")}`;
-
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: datos.correo.trim(),
     password: datos.contrasena,
-    options: { data: { agencia }, emailRedirectTo: `${origen}/auth/confirm` },
+    options: { data: { agencia }, emailRedirectTo: `${urlSitio()}/auth/confirm` },
   });
   // Al volver a pulsar "Crear cuenta", Supabase no reenvía el correo tan seguido:
   // la cuenta ya existe y el correo ya está enviado.

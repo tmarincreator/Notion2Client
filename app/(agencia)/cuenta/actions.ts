@@ -1,9 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { obtenerUsuario } from "@/lib/auth";
+import { urlSitio } from "@/lib/url";
 
 /*
   Cambios en la cuenta de la agencia (Supabase Auth). Tras cada cambio se
@@ -37,12 +37,10 @@ export async function cambiarCorreo(_previo: EstadoCuenta, correo: string): Prom
   const usuario = await obtenerUsuario();
   if (nuevo === usuario.correo.toLowerCase()) return { errores: { correo: "Es el mismo correo que ya tienes." } };
 
-  const cabeceras = await headers();
-  const origen = cabeceras.get("origin") ?? `http://${cabeceras.get("host")}`;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.updateUser(
     { email: nuevo },
-    { emailRedirectTo: `${origen}/auth/confirm` },
+    { emailRedirectTo: `${urlSitio()}/auth/confirm` },
   );
   if (error) {
     if (error.code === "email_exists") return { errores: { correo: "Ya existe una cuenta con este correo." } };
