@@ -14,18 +14,31 @@ export function FormBase({
   accion,
   bases,
   actual,
+  publicado = false,
 }: {
   id: string;
   accion: (previo: EstadoFormulario, fuente: string) => Promise<EstadoFormulario>;
   bases: BaseResumen[];
   actual: string | null;
+  /** El portal está publicado: cambiar de base cambia al momento lo que ve el cliente. */
+  publicado?: boolean;
 }) {
   const [estado, enviarAccion, enviando] = useActionState(accion, {});
   const [elegida, setElegida] = useState(actual ?? "");
+  const cambiaBase = !!actual && !!elegida && actual !== elegida;
 
   function enviar(e: React.FormEvent) {
     e.preventDefault();
     if (enviando) return;
+    if (
+      publicado &&
+      cambiaBase &&
+      !window.confirm(
+        "Este portal está publicado. Al cambiar de base, tu cliente dejará de ver los campos que tenía visibles hasta que vuelvas a elegirlos en el paso 3. ¿Cambiar de base?",
+      )
+    ) {
+      return;
+    }
     startTransition(() => enviarAccion(elegida));
   }
 
@@ -65,9 +78,18 @@ export function FormBase({
         </fieldset>
       )}
 
-      {actual && elegida && actual !== elegida && (
-        <p className="n2c-small n2c-muted">Al cambiar de base tendrás que volver a elegir los campos visibles.</p>
-      )}
+      {cambiaBase &&
+        (publicado ? (
+          <div className="n2c-banner n2c-banner--warning" role="status">
+            <Icono nombre="aviso" />
+            <div className="n2c-banner__body">
+              <strong>Este portal está publicado</strong>
+              <span>Si cambias de base, tu cliente verá al momento solo el nombre de cada entregable, hasta que vuelvas a elegir los campos visibles en el paso 3.</span>
+            </div>
+          </div>
+        ) : (
+          <p className="n2c-small n2c-muted">Al cambiar de base tendrás que volver a elegir los campos visibles.</p>
+        ))}
 
       <div className="flex flex-wrap justify-end gap-3">
         <BotonEnlace variante="fantasma" href={`/portales/${id}?paso=1`}>Atrás</BotonEnlace>

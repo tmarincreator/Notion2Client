@@ -9,10 +9,10 @@ import { FormCampos } from "./FormCampos";
 
 /* Pasos 2 y 3 del asistente: leen de Notion (en el servidor) con el token de la agencia. */
 
-export async function PasoBase({ id, actual }: { id: string; actual: string | null }) {
+export async function PasoBase({ id, actual, publicado }: { id: string; actual: string | null; publicado: boolean }) {
   const bases = await listarBases(await tokenAgencia());
   if (!bases.ok) return <ErrorNotionAviso error={bases.error} />;
-  return <FormBase id={id} accion={elegirBase.bind(null, id)} bases={bases.datos} actual={actual} />;
+  return <FormBase id={id} accion={elegirBase.bind(null, id)} bases={bases.datos} actual={actual} publicado={publicado} />;
 }
 
 export async function PasoCampos({ id, fuente, visibles }: { id: string; fuente: string; visibles: string[] }) {

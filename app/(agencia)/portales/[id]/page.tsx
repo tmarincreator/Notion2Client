@@ -70,7 +70,7 @@ async function Asistente({
           />
         )}
 
-        {paso === 2 && <PasoBase id={id} actual={portal.fuente_notion_id} />}
+        {paso === 2 && <PasoBase id={id} actual={portal.fuente_notion_id} publicado={portal.estado === "publicado"} />}
 
         {paso === 3 &&
           (portal.fuente_notion_id ? (
