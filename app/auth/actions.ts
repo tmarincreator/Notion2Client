@@ -1,0 +1,86 @@
+"use server";
+
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import type { AuthError } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
+
+export type DatosAcceso = { correo: string; contrasena: string; agencia?: string };
+/** `aviso`: mensaje positivo (p. ej. "revisa tu correo") en lugar de un error. */
+export type EstadoAcceso = { error?: string; aviso?: string };
+
+const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Mensajes en español para los códigos de error de Supabase Auth.
+const MENSAJES: Record<string, string> = {
+  invalid_credentials: "El correo o la contraseña no son correctos. Compruébalos e inténtalo de nuevo.",
+  email_not_confirmed: "Todavía no has confirmado tu correo. Abre el enlace que te enviamos al crear la cuenta.",
+  user_already_exists: "Ya existe una cuenta con este correo. Inicia sesión.",
+  email_exists: "Ya existe una cuenta con este correo. Inicia sesión.",
+  weak_password: "Esta contraseña es demasiado débil. Prueba con otra más larga.",
+  email_address_invalid: "Este correo no parece válido. Revisa que tenga @ y dominio.",
+  signup_disabled: "El registro de cuentas nuevas está cerrado ahora mismo.",
+  over_request_rate_limit: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+  over_email_send_rate_limit: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+};
+
+const mensajeDe = (error: AuthError) =>
+  (error.code && MENSAJES[error.code]) || "No hemos podido completar la operación. Inténtalo de nuevo.";
+
+// Validación mínima en el servidor: nunca confiamos solo en la del navegador.
+function datosValidos({ correo, contrasena }: DatosAcceso) {
+  return CORREO_VALIDO.test(correo) && contrasena.length > 0;
+}
+
+export async function iniciarSesion(_previo: EstadoAcceso, datos: DatosAcceso): Promise<EstadoAcceso> {
+  if (!datosValidos(datos)) return { error: MENSAJES.invalid_credentials };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email: datos.correo.trim(),
+    password: datos.contrasena,
+  });
+  if (error) return { error: mensajeDe(error) };
+
+  redirect("/dashboard");
+}
+
+export async function registrarse(_previo: EstadoAcceso, datos: DatosAcceso): Promise<EstadoAcceso> {
+  const agencia = datos.agencia?.trim() ?? "";
+  if (!datosValidos(datos) || !agencia || datos.contrasena.length < 8) {
+    return { error: "Revisa los datos del formulario e inténtalo de nuevo." };
+  }
+
+  // El enlace del correo de confirmación vuelve a /auth/confirm de esta misma web.
+  const cabeceras = await headers();
+  const origen = cabeceras.get("origin") ?? `http://${cabeceras.get("host")}`;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signUp({
+    email: datos.correo.trim(),
+    password: datos.contrasena,
+    options: { data: { agencia }, emailRedirectTo: `${origen}/auth/confirm` },
+  });
+  // Al volver a pulsar "Crear cuenta", Supabase no reenvía el correo tan seguido:
+  // la cuenta ya existe y el correo ya está enviado.
+  if (error?.code === "over_email_send_rate_limit") {
+    return {
+      aviso: `Ya te hemos enviado un correo de confirmación a ${datos.correo.trim()}. Revisa tu bandeja de entrada y la carpeta de spam.`,
+    };
+  }
+  if (error) return { error: mensajeDe(error) };
+
+  // Con la confirmación por correo activada en Supabase no hay sesión hasta confirmar.
+  // Supabase tampoco avisa si el correo ya existe: el mensaje vale para ambos casos.
+  if (!data.session) {
+    return { aviso: `Te hemos enviado un correo a ${datos.correo.trim()}. Abre el enlace para confirmar tu cuenta y entrar.` };
+  }
+
+  redirect("/dashboard");
+}
+
+export async function cerrarSesion() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/");
+}
